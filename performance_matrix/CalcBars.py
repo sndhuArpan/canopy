@@ -1,7 +1,7 @@
-import numpy as np
 from math import ceil
 from datetime import timedelta
 from Util import interval_enum
+
 
 class CalcBars:
 
@@ -18,7 +18,6 @@ class CalcBars:
     @staticmethod
     def get_hours(minutes):
         hours = ceil(minutes/60)
-        minutes = minutes % 60
         return hours
 
     @staticmethod
@@ -36,6 +35,8 @@ class CalcBars:
             return CalcBars.get_weeks(start, end)
         if interval == interval_enum.ONE_HOUR.name:
             return CalcBars.get_hours(minutes)
+        if interval == interval_enum.FIFTEEN_MINUTE.name:
+            return minutes/interval_enum.FIFTEEN_MINUTE.value
 
 
 

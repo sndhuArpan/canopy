@@ -1,2 +1,4 @@
 **/.idea/
 *.iml
+performance_matrix/matrix_charts/TempPlotFiles/*
+*.cpython-39.pyc

@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 from dateutil.relativedelta import relativedelta
 
@@ -8,6 +7,7 @@ from performance_matrix.AccountUtilization import AccountUtilization
 from performance_matrix.MonteCarloSimulation import MonteCarlosSimulation
 from performance_matrix.EquityCurve import EquityCurve
 from fractions import Fraction
+
 
 class CalcPerformanceMatrix:
 
@@ -49,6 +49,14 @@ class CalcPerformanceMatrix:
         profit_value = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].sum()
         return round(profit_value/total_winners, 3)
 
+    def maximum_profit_per_trade(self):
+        max_profit = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].max()
+        return max_profit
+
+    def maximum_loss_per_trade(self):
+        max_loss = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].min()
+        return max_loss
+
     def average_loss(self):
         loss_value = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].sum()
         total_losers = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].count()
@@ -84,6 +92,8 @@ class CalcPerformanceMatrix:
             if np.isnan(row['realised_profit']):
                 continue
             bars = CalcBars.bars_count(row['entry_datetime'], row['booked_date'], row['interval'])
+            if bars is None:
+                bars = 0
             total_bars = total_bars + bars
             total_trades = total_trades + 1
             if bars >= maximum_bars:

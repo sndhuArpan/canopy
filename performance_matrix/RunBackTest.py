@@ -17,6 +17,8 @@ def run_backtest(report_file ,initial_amount_value ,ruin_equity, monte_carlo):
     backtest_report_dict['win_rate'] = Calc_Obj.win_rate()
     backtest_report_dict['average_win'] = Calc_Obj.average_win()
     backtest_report_dict['average_loss'] = Calc_Obj.average_loss()
+    backtest_report_dict['maximum_profit'] = Calc_Obj.maximum_profit_per_trade()
+    backtest_report_dict['maximum_loss'] = Calc_Obj.maximum_loss_per_trade()
     backtest_report_dict['risk_reward_ratio'] = Calc_Obj.risk_reward_ratio()
     backtest_report_dict['sharpe_ratio'] = Calc_Obj.sharpe_ratio()
     backtest_report_dict['cagr'] = Calc_Obj.cagr()
@@ -36,9 +38,9 @@ def run_backtest(report_file ,initial_amount_value ,ruin_equity, monte_carlo):
 
 
 if __name__ == '__main__':
-    report_file = '/Users/Sandhu/Downloads/APOLLOHOSP-EQ_ONE_DAY.csv'
+    report_file = '/Users/Sandhu/Downloads/basic_trend.csv'
     initial_amount_value = 200000
     ruin_equity = 150000
     volatity = 30
-    monte_carlo = True
+    monte_carlo = False
     run_backtest(report_file, initial_amount_value, ruin_equity, monte_carlo)
