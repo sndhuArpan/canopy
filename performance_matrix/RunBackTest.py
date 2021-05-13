@@ -1,5 +1,6 @@
 from performance_matrix.CalcPerformanceMatrix import CalcPerformanceMatrix
 from performance_matrix.TransfromTradeSheet import TransformTradeSheet
+from performance_matrix.performance_report.src_html.render_html import render
 
 
 def run_backtest(report_file ,initial_amount_value ,ruin_equity, monte_carlo):
@@ -35,6 +36,9 @@ def run_backtest(report_file ,initial_amount_value ,ruin_equity, monte_carlo):
     if monte_carlo:
         print('Running Monte Carlo Simulation :')
         Calc_Obj.monte_carlo_simulation()
+
+def render_html():
+    pass
 
 
 if __name__ == '__main__':
