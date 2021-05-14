@@ -1,4 +1,6 @@
 **/.idea/
 *.iml
-performance_matrix/matrix_charts/TempPlotFiles/*
+performance_matrix/lib/matrix_charts/TempPlotFiles/*
+performance_matrix/performance_report/temp/*
 *.cpython-39.pyc
+*.DS_Store

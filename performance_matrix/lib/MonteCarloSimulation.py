@@ -1,11 +1,11 @@
 import random
 import pandas as pd
 import warnings
-import matplotlib.pyplot as plt
+
 desired_width = 320
 pd.set_option('display.width', desired_width)
 
-from performance_matrix.matrix_charts.PlotBasicTableFromDF import PlotBasicTableFromDF
+from performance_matrix.lib.matrix_charts.PlotBasicTableFromDF import PlotBasicTableFromDF
 
 class MonteCarlosSimulation:
 

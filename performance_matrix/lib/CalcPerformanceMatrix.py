@@ -1,24 +1,33 @@
 import numpy as np
 from dateutil.relativedelta import relativedelta
 
-from performance_matrix.CalcDrawDown import CalcDrawDown
-from performance_matrix.CalcBars import CalcBars
-from performance_matrix.AccountUtilization import AccountUtilization
-from performance_matrix.MonteCarloSimulation import MonteCarlosSimulation
-from performance_matrix.EquityCurve import EquityCurve
+from performance_matrix.lib.CalcDrawDown import CalcDrawDown
+from performance_matrix.lib.CalcBars import CalcBars
+from performance_matrix.lib.AccountUtilization import AccountUtilization
+from performance_matrix.lib.MonteCarloSimulation import MonteCarlosSimulation
+from performance_matrix.lib.EquityCurve import EquityCurve
 from fractions import Fraction
+import os
+import pandas as pd
 
 
 class CalcPerformanceMatrix:
 
-    def __init__(self, transformed_trade_sheet_df, initial_account_value, ruin_equity, volatility_period=30):
-        self.trade_df = transformed_trade_sheet_df
+    def __init__(self, transformed_trade_sheet_path, initial_account_value, ruin_equity, volatility_period=30):
+        self.trade_df = pd.read_csv(transformed_trade_sheet_path)
+        self.plot_dir = os.path.dirname(transformed_trade_sheet_path)
+        self._convert_df_datetime()
         self.initial_account_value = initial_account_value
         self.ruin_equity = ruin_equity
         self.volatility_period = volatility_period
-        self.AccountUtilization_obj = AccountUtilization(self.trade_df, self.initial_account_value)
-        self.EquityCurve_obj = EquityCurve(self.trade_df, self.initial_account_value, self.volatility_period)
-        self.CalcDrawDown_obj = CalcDrawDown(self.trade_df, self.initial_account_value)
+        self.AccountUtilization_obj = AccountUtilization(self.trade_df, self.initial_account_value, self.plot_dir)
+        self.EquityCurve_obj = EquityCurve(self.trade_df, self.initial_account_value, self.volatility_period, self.plot_dir)
+        self.CalcDrawDown_obj = CalcDrawDown(self.trade_df, self.initial_account_value, self.plot_dir)
+
+    def _convert_df_datetime(self):
+        self.trade_df['entry_datetime'] = self.trade_df['entry_datetime'].astype('datetime64[ns]')
+        self.trade_df['exit_datetime'] = self.trade_df['exit_datetime'].astype('datetime64[ns]')
+        self.trade_df['booked_date'] = self.trade_df['booked_date'].astype('datetime64[ns]')
 
     @staticmethod
     def _value_change(initial_value, percentage):
@@ -80,8 +89,10 @@ class CalcPerformanceMatrix:
                    'recovery_date': self.CalcDrawDown_obj.draw_down_end_time,
                    'recovery_time': self.CalcDrawDown_obj.recovery_time,
                    'recovery_trade_number': self.CalcDrawDown_obj.recovery_trade_number}
-        self.CalcDrawDown_obj.draw_down_wealth_index_plot()
         return dd_dict
+
+    def drawdown_matrix_plot(self):
+        return self.CalcDrawDown_obj.draw_down_wealth_index_plot()
 
     def bars_held(self):
         total_bars = 0
@@ -107,8 +118,10 @@ class CalcPerformanceMatrix:
 
     def max_account_utilized(self):
         utilization_dict =  self.AccountUtilization_obj.account_utilization_matrix()
-        self.AccountUtilization_obj.plot_graph()
         return utilization_dict
+
+    def account_uitlization_plot(self):
+        return self.AccountUtilization_obj.plot_graph()
 
     def calmar_ratio(self):
         cagr = self.cagr()
@@ -132,13 +145,15 @@ class CalcPerformanceMatrix:
             return (account_final_value / self.initial_account_value) ** (1/period) - 1
 
     def equity_curve(self):
-        self.EquityCurve_obj.generate_equity_wealth_curve()
-        self.EquityCurve_obj.generate_equity_profit_curve()
-        self.EquityCurve_obj.generate_volatility_return_graph()
+        dict_rt = {}
+        dict_rt['Equity_Wealth_Curve_Plot'] = self.EquityCurve_obj.generate_equity_wealth_curve()
+        dict_rt['Equity_Profit_Plot'] = self.EquityCurve_obj.generate_equity_profit_curve()
+        dict_rt['Volatility_Return_Plot'] = self.EquityCurve_obj.generate_volatility_return_graph()
+        return dict_rt
 
     def monte_carlo_simulation(self):
         profit_list = self.EquityCurve_obj.wealth_and_profit_df['profit']
         start_equity = self.initial_account_value
         ruin_equity = self.ruin_equity
         obj = MonteCarlosSimulation(profit_list, start_equity, ruin_equity)
-        obj.save_image()
+        return obj.save_image()

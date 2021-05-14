@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import ast
 import pandas as pd
 import numpy as np
@@ -6,16 +7,28 @@ import configparser as cfg_parser
 
 class TransformTradeSheet:
 
-    def __init__(self, full_trade_sheet_path):
-        self.config_dict = self._get_config_dict()
+    def __init__(self, full_trade_sheet_path, run_type):
+        self.run_type = run_type
         self.full_trade_sheet_path = full_trade_sheet_path
+        self.trade_sheet_path = self.generate_report_dir()
+        self.config_dict = self._get_config_dict()
         self.trade_sheet_df = self._create_df()
         self.transform_sheet_df = pd.DataFrame(columns= ast.literal_eval(self.config_dict.get('transform_trade_sheet_columns')))
         self.transform_sheet_df.set_index('system_trade_id')
 
+    def generate_report_dir(self):
+        dir = os.path.splitext(os.path.basename(self.full_trade_sheet_path))[0]
+        final_dir =  os.path.join(os.path.join(os.path.join(Path(__file__).parent.parent, 'performance_report/temp/'), dir),
+                                  self.run_type)
+        if os.path.isdir(final_dir):
+            return final_dir
+        else:
+            os.makedirs(final_dir, exist_ok=True)
+            return final_dir
+
     def _get_config_dict(self):
         self.config = cfg_parser.RawConfigParser()
-        self.current_dir = os.path.dirname(os.path.realpath(__file__))
+        self.current_dir = Path(os.path.dirname(os.path.realpath(__file__))).parent
         self.config_path = os.path.join(self.current_dir, 'config/config.cfg')
         self.config.read(self.config_path)
         return dict(self.config.items('GLOBAL'))
@@ -154,8 +167,11 @@ class TransformTradeSheet:
         for df_per_system_trade_id in self._yield_system_trade_data():
             self._insert_transform_sheet_details(df_per_system_trade_id)
         #self.transform_sheet_df = self.transform_sheet_df.fillna(None)
-        return self.transform_sheet_df
+        self.transform_sheet_df.to_csv(os.path.join(self.trade_sheet_path, 'trade_sheet.csv'), date_format='%Y-%m-%dT%H:%M:%S' ,index=False)
+        return os.path.join(self.trade_sheet_path, 'trade_sheet.csv')
 
+if __name__ == '__main__':
+    print(os.path.join(Path(__file__).parent, '../performance_report/temp/'))
 
 
 

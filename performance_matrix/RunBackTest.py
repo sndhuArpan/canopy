@@ -1,17 +1,19 @@
-from performance_matrix.CalcPerformanceMatrix import CalcPerformanceMatrix
-from performance_matrix.TransfromTradeSheet import TransformTradeSheet
-from performance_matrix.performance_report.src_html.render_html import render
+import os
+from performance_matrix.lib.CalcPerformanceMatrix import CalcPerformanceMatrix
+from performance_matrix.lib.TransfromTradeSheet import TransformTradeSheet
+from performance_matrix.performance_report.src_html.RenderHTML import RenderHTML
 
 
-def run_backtest(report_file ,initial_amount_value ,ruin_equity, monte_carlo):
+def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte_carlo):
     backtest_report_dict = {}
     # transforming trade sheet
     print('Transforming Trade sheet')
-    obj = TransformTradeSheet(report_file)
+    obj = TransformTradeSheet(report_file, run_type)
     trade_sheet = obj.transform_trade_sheet()
     print('Create Calculation Matrix Objects')
     Calc_Obj = CalcPerformanceMatrix(trade_sheet, initial_amount_value, ruin_equity)
     print('Get Basic Values')
+    backtest_report_dict['Report_Name'] = os.path.splitext(os.path.basename(report_file))[0] + ' - ' + run_type
     backtest_report_dict['Net_Profit'] = Calc_Obj.net_profit()
     backtest_report_dict['profit_factor'] = Calc_Obj.profit_factor()
     backtest_report_dict['total_no_trade'] = Calc_Obj.total_no_trade()
@@ -25,26 +27,50 @@ def run_backtest(report_file ,initial_amount_value ,ruin_equity, monte_carlo):
     backtest_report_dict['cagr'] = Calc_Obj.cagr()
     backtest_report_dict['calmar_ratio'] = Calc_Obj.calmar_ratio()
     print('Get Bars Held Values')
-    backtest_report_dict['bars_held_dict'] = Calc_Obj.bars_held()
+    backtest_report_dict['average_bars'] = Calc_Obj.bars_held().get('average_bars')
+    backtest_report_dict['maximum_bars'] = Calc_Obj.bars_held().get('maximum_bars')
+    backtest_report_dict['minimum_bars'] = Calc_Obj.bars_held().get('minimum_bars')
     print('Get Drawdown Value')
-    backtest_report_dict['drawdown_matrix'] = Calc_Obj.drawdown_matrix()
+    backtest_report_dict['maximum_drawdown'] = Calc_Obj.drawdown_matrix().get('maximum_drawdown')
+    backtest_report_dict['max_drawdown_date'] = Calc_Obj.drawdown_matrix().get('max_drawdown_date')
+    backtest_report_dict['draw_down_start_time'] = Calc_Obj.drawdown_matrix().get('draw_down_start_time')
+    backtest_report_dict['draw_down_time'] = Calc_Obj.drawdown_matrix().get('draw_down_time')
+    backtest_report_dict['draw_down_trade_number'] = Calc_Obj.drawdown_matrix().get('draw_down_trade_number')
+    backtest_report_dict['recovery_date'] = Calc_Obj.drawdown_matrix().get('recovery_date')
+    backtest_report_dict['recovery_time'] = Calc_Obj.drawdown_matrix().get('recovery_time')
+    backtest_report_dict['recovery_trade_number'] = Calc_Obj.drawdown_matrix().get('recovery_trade_number')
+    backtest_report_dict['Drawdown_Plot'] = Calc_Obj.drawdown_matrix_plot()
     print('Get Account Utilization')
-    backtest_report_dict['Account_utilization'] = Calc_Obj.max_account_utilized()
+    backtest_report_dict['max_amount_utilized_percentage'] = Calc_Obj.max_account_utilized().get('max_amount_utilized_percentage')
+    backtest_report_dict['min_amount_utilized_percentage'] = Calc_Obj.max_account_utilized().get('min_amount_utilized_percentage')
+    backtest_report_dict['average_amount_utilized_percentage'] = Calc_Obj.max_account_utilized().get('average_amount_utilized_percentage')
+    backtest_report_dict['max_trades_active'] = Calc_Obj.max_account_utilized().get('max_trades_active')
+    backtest_report_dict['min_trades_active'] = Calc_Obj.max_account_utilized().get('min_trades_active')
+    backtest_report_dict['average_trades_active'] = Calc_Obj.max_account_utilized().get('average_trades_active')
+    backtest_report_dict['Account_Utilization_Plot'] = Calc_Obj.account_uitlization_plot()
     print('Get Equity Curve')
-    Calc_Obj.equity_curve()
-    print(backtest_report_dict)
+    backtest_report_dict['Equity_Wealth_Curve_Plot'] = Calc_Obj.equity_curve().get('Equity_Wealth_Curve_Plot')
+    backtest_report_dict['Equity_Profit_Plot'] = Calc_Obj.equity_curve().get('Equity_Profit_Plot')
+    backtest_report_dict['Volatility_Return_Plot'] = Calc_Obj.equity_curve().get('Volatility_Return_Plot')
     if monte_carlo:
         print('Running Monte Carlo Simulation :')
-        Calc_Obj.monte_carlo_simulation()
+        backtest_report_dict['Monte_Carlo_Plot'] = Calc_Obj.monte_carlo_simulation()
+    return backtest_report_dict
 
-def render_html():
-    pass
+def render_html(backtext_result):
+    Render_Obj = RenderHTML('index.html', backtext_result)
+    base_dir = os.path.dirname(backtext_result.get('Drawdown_Plot'))
+    new_html_file = os.path.join(base_dir, 'backtest_report.html')
+    Render_Obj.generate_new_file(new_html_file)
 
 
 if __name__ == '__main__':
     report_file = '/Users/Sandhu/Downloads/basic_trend.csv'
+    run_type = 'fresh_run'
     initial_amount_value = 200000
     ruin_equity = 150000
     volatity = 30
     monte_carlo = False
-    run_backtest(report_file, initial_amount_value, ruin_equity, monte_carlo)
+    backtest_result = run_backtest(report_file, run_type, initial_amount_value, ruin_equity, monte_carlo)
+    print(backtest_result)
+    #render_html(backtest_result)

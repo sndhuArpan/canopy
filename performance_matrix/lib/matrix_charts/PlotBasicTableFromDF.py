@@ -39,7 +39,7 @@ class PlotBasicTableFromDF:
 
     def get_base_dir(self):
         dir = os.path.dirname(os.path.abspath(__file__))
-        return  os.path.join(dir, 'TempPlotFiles' )
+        return  os.path.join(dir, 'TempPlotFiles')
 
     def get_image(self, image_dir= None):
         if image_dir is None:
@@ -48,3 +48,4 @@ class PlotBasicTableFromDF:
         self.plot.savefig(image_file,
                           bbox_inches='tight',
                           dpi=200)
+        return image_file

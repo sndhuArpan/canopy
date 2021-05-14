@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
-from datetime import timedelta
-from performance_matrix.matrix_charts.PlotBasicLineChart import PlotBasicLineChart
-from performance_matrix.matrix_charts.SubPlotSharedXAxis import SubPlotSharedXAxis
+from performance_matrix.lib.matrix_charts.PlotBasicLineChart import PlotBasicLineChart
+from performance_matrix.lib.matrix_charts.SubPlotSharedXAxis import SubPlotSharedXAxis
 
 
 class EquityCurve:
 
-    def __init__(self, trade_df, initial_account_value, volatility_period):
+    def __init__(self, trade_df, initial_account_value, volatility_period, plot_dir):
+        self.plot_dir = plot_dir
         self.trade_sheet = trade_df[trade_df['realised_profit'].notna()].sort_values('booked_date')
         self.initial_account_value = initial_account_value
         self.volatility_period = volatility_period
@@ -40,7 +40,8 @@ class EquityCurve:
                      'image_file': 'Equity_To_Wealth_Graph'
                      }
         plot_obj = PlotBasicLineChart(**plot_dict)
-        plot_obj.get_image()
+        image_path = plot_obj.get_image(self.plot_dir)
+        return image_path
 
     def generate_equity_profit_curve(self):
         plot_dict = {'x_axis_values': self.wealth_and_profit_df['booked_date'],
@@ -51,16 +52,20 @@ class EquityCurve:
                      'image_file': 'Equity_To_Profit_Graph'
                      }
         plot_obj = PlotBasicLineChart(**plot_dict)
-        plot_obj.get_image()
+        image_path = plot_obj.get_image(self.plot_dir)
+        return image_path
 
     def generate_volatility_return_graph(self):
         plot_dict = {'x_axis_values': self.wealth_and_profit_df['booked_date'],
                      'upper_y_axis_values': self.wealth_and_profit_df['wealth'],
                      'lower_y_axis_values': self.wealth_and_profit_df['volatility'],
+                     'upper_fill_between_color': 'green',
+                     'lower_fill_between_color': 'red',
                      'x_axis_label': 'Account Date',
                      'upper_y_label': 'wealth',
                      'lower_y_label': 'volatility',
                      'title': 'Return by Volatility',
                      'image_file': 'Return_By_Volatility_Graph'}
         plot_obj = SubPlotSharedXAxis(**plot_dict)
-        plot_obj.get_image()
+        image_path = plot_obj.get_image(self.plot_dir)
+        return image_path

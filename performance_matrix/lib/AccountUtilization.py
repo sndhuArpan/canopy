@@ -1,12 +1,12 @@
-import numpy as np
 import pandas as pd
 from datetime import timedelta
-from performance_matrix.matrix_charts.PlotSharedXAxisTwoYAxis import PlotSharedXAxisTwoYAxis
+from performance_matrix.lib.matrix_charts.SubPlotSharedXAxis import SubPlotSharedXAxis
 
 
 class AccountUtilization:
 
-    def __init__(self, trade_df, initial_account_value):
+    def __init__(self, trade_df, initial_account_value, plot_dir):
+        self.plot_dir = plot_dir
         self.trade_sheet = trade_df[trade_df['realised_profit'].notna()]
         self.initial_account_value = initial_account_value
         self.account_util_df = self.account_utilization()
@@ -28,6 +28,8 @@ class AccountUtilization:
             that_date = that_date + timedelta(days=1)
             that_date1 = that_date1 + timedelta(days=1)
             account_util = account_util.append(record_dict, ignore_index=True)
+        account_util = account_util[account_util.amount_utilized_percentage != 0]
+        account_util = account_util[account_util.active_trades != 0]
         return account_util
 
     def account_utilization_matrix(self):
@@ -46,16 +48,16 @@ class AccountUtilization:
 
     def plot_graph(self):
         plot_dict = {'x_axis_values': self.account_util_df['account_date'],
-                     'right_y_axis_values': self.account_util_df['active_trades'],
-                     'left_y_axis_values': self.account_util_df['amount_utilized_percentage'],
-                     'x_axis_label' : 'Account Date',
-                     'right_y_label': 'Active Trades',
-                     'left_y_label' : 'Amount Utilized Percentage',
-                     'title' : 'Initial Account :' + str(self.initial_account_value),
-                     'image_file': 'Account_Utilization_Graph'
-                     }
-        plot_obj = PlotSharedXAxisTwoYAxis(**plot_dict)
-        plot_obj.get_image()
+                     'upper_y_axis_values': self.account_util_df['amount_utilized_percentage'],
+                     'lower_y_axis_values': self.account_util_df['active_trades'],
+                     'x_axis_label': 'Account Date',
+                     'upper_y_label': 'Account Util %',
+                     'lower_y_label': 'Trades',
+                     'title': 'Account_Utilization_Graph',
+                     'image_file': 'Account_Utilization_Graph'}
+        plot_obj = SubPlotSharedXAxis(**plot_dict)
+        image_path = plot_obj.get_image(self.plot_dir)
+        return image_path
 
 
 

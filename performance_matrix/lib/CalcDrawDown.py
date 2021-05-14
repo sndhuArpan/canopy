@@ -1,13 +1,14 @@
 import random
 import pandas as pd
 import numpy as np
-from performance_matrix.TransfromTradeSheet import TransformTradeSheet
-from performance_matrix.matrix_charts.SubPlotSharedXAxis import SubPlotSharedXAxis
-from performance_matrix.GetTradeCount import GetTradeCount
+from performance_matrix.lib.TransfromTradeSheet import TransformTradeSheet
+from performance_matrix.lib.matrix_charts.SubPlotSharedXAxis import SubPlotSharedXAxis
+from performance_matrix.lib.GetTradeCount import GetTradeCount
 
 class CalcDrawDown:
 
-    def __init__(self, transformed_trade_sheet_df, initial_account_value):
+    def __init__(self, transformed_trade_sheet_df, initial_account_value, plot_dir):
+        self.plot_dir = plot_dir
         self.maximum_drawdown = None
         self.max_drawdown_date = None
         self.draw_down_start_time = None
@@ -69,6 +70,8 @@ class CalcDrawDown:
         plot_dict = {'x_axis_values': wealth_series.index,
                      'upper_y_axis_values': wealth_series.values,
                      'lower_y_axis_values': drawdown_series.values,
+                     'upper_fill_between_color': 'green',
+                     'lower_fill_between_color' : 'red',
                      'x_axis_label': 'Account Date',
                      'upper_y_label': 'wealth',
                      'lower_y_label': 'drawdown',
@@ -76,7 +79,8 @@ class CalcDrawDown:
                      'image_file' : 'drawdown_to_wealth_graph'
                      }
         plot_obj = SubPlotSharedXAxis(**plot_dict)
-        plot_obj.get_image()
+        image_path = plot_obj.get_image(self.plot_dir)
+        return image_path
 
     def get_max_drawdown(self):
         drawdown_series = self.wealth_peaks_drawdown_dict.get('drawdown')
