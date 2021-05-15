@@ -76,7 +76,7 @@ class CalcDrawDown:
                      'upper_y_label': 'wealth',
                      'lower_y_label': 'drawdown',
                      'title': 'Portfolio Drawdown',
-                     'image_file' : 'drawdown_to_wealth_graph'
+                     'image_file' : 'drawdown_to_wealth_graph.jpeg'
                      }
         plot_obj = SubPlotSharedXAxis(**plot_dict)
         image_path = plot_obj.get_image(self.plot_dir)

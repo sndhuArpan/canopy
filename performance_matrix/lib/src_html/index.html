@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <meta name="description" content="Affordable Web Design For Small And Medium-sized Companies">
+    <meta name="author" content="Sebastian Eschweiler">
+    <title>Canopy Design | Welcome</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="./css/font-awesome.min.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div id="branding">
+                <h1><i class="fa fa-rocket"></i> <span class="highlight"></span> CANOPY ANALYSIS</h1>
+            </div>
+        </div>
+    </header>
+    <div id = "backTestReport" class="pageLayout">
+    <header>
+        <div class="container">
+            <div id="branding">
+                <h1><i class="fa fa-rocket"></i> <span class="highlight">{{Report_Name}} - </span> REPORT </h1>
+            </div>
+        </div>
+    </header>
+    <section id="showcase">
+        <table id="t01">
+            <tr id="row1">
+                <th>NET PROFIT</th>
+                <th>PROFIT FACTOR</th>
+                <th>TOTAL TRADES</th>
+            </tr>
+            <tr>
+                <td>{{Net_Profit}}</td>
+                <td>{{profit_factor}}</td>
+                <td>{{total_no_trade}}</td>
+            </tr>
+            <tr id="row2">
+                <th>WIN RATE</th>
+                <th>AVERAGE WIN</th>
+                <th>AVERAGE LOSS</th>
+            </tr>
+            <tr>
+                <td>{{win_rate}}</td>
+                <td>{{average_win}}</td>
+                <td>{{average_loss}}</td>
+            </tr>
+            <tr id="row2">
+                <th>MAXIMUM PROFIT</th>
+                <th>MAXIMUM LOSS</th>
+                <th>REWARD RISK RATIO</th>
+            </tr>
+            <tr>
+                <td>{{maximum_profit}}</td>
+                <td>{{maximum_loss}}</td>
+                <td>{{risk_reward_ratio}}</td>
+            </tr>
+            <tr id="row2">
+                <th>SHAPE RATIO</th>
+                <th>CAGR</th>
+                <th>REWARD RISK RATIO</th>
+            </tr>
+            <tr>
+                <td>{{sharpe_ratio}}</td>
+                <td>{{cagr}}</td>
+                <td>{{calmar_ratio}}</td>
+            </tr>
+        </table>
+    </section>
+    <div class="page-padding"></div>
+    <section id="newsletter">
+        <div class="table-header" id="bars">BARS HELD</div>
+        <table id="t02">
+            <tr>
+                <td>AVERAGE BARS</td>
+                <td>{{average_bars}}</td>
+                
+            </tr>
+            <tr id="t2-row2">
+                <td>MAXIMUM BARS</td>
+                <td>{{maximum_bars}}</td>
+               
+            </tr>
+            <tr>
+                <td>MINIMUM BARS</td>
+                <td>{{minimum_bars}}</td>
+                
+            </tr>
+        </table>
+    </section>
+    </div>
+    <div class="page-padding"></div>
+    <div id = "drawDownReport" class="pageLayout">
+        <header>
+            <div class="container">
+                <div id="branding">
+                    <h1><i class="fa fa-rocket"></i> <span class="highlight">{{Report_Name}} - </span> DRAWDOWN REPORT</h1>
+                </div>
+            </div>
+        </header>
+        <section id="drawdown-data">
+            <div id="drawdown-data-container">
+            <div id="drawdown-data-left">
+            <table id="t02">
+                <tr>
+                    <td>MAXIMUM DRAWDOWN</td>
+                    <td>{{maximum_drawdown}}</td>
+                </tr>
+                <tr id="t2-row2">
+                    <td>MAXIMUM DRAWDOWN DATE</td>
+                    <td>{{max_drawdown_date}}</td>
+                </tr>
+                <tr>
+                    <td>DRAWDOWN START TIME</td>
+                    <td>{{draw_down_start_time}}</td>
+                </tr>
+                <tr>
+                    <td>DRAWDOWN TIME</td>
+                    <td>{{draw_down_time}}</td>
+                </tr>
+                <tr>
+                    <td>DRAWDOWN TRADE NUMBER</td>
+                    <td>{{draw_down_trade_number}}</td>
+                </tr>
+                <tr>
+                    <td>RECOVERY DATE</td>
+                    <td>{{recovery_date}}</td>
+                </tr>
+                <tr>
+                    <td>RECOVERY TIME</td>
+                    <td>{{recovery_time}}</td>
+                </tr>
+                <tr>
+                    <td>RECOVERY TRADE NUMBER</td>
+                    <td>{{recovery_trade_number}}</td>
+                </tr>
+            </table>
+            </div>
+            <div id="drawdown-data-right">  <span>&nbsp;&nbsp;</span><span></span>
+                <img src={{Drawdown_Plot}} alt="Drawdown_Plot-img" class="image-render"  width="50%" ></img>
+            </div>
+        </div>
+        </section>
+        </div>
+
+        <div class="page-padding"></div>
+    <div id = "drawDownReport" class="pageLayout">
+        <header>
+            <div class="container">
+                <div id="branding">
+                    <h1><i class="fa fa-rocket"></i> <span class="highlight">{{Report_Name}} - </span> ACCOUNT UTILIZATION</h1>
+                </div>
+            </div>
+        </header>
+        <section id="drawdown-data">
+            <div id="drawdown-data-container">
+            <div id="drawdown-data-left">
+            <div class = "upper-table">
+                <div class="table-header">AMOUNT PERCENTAGE</div>
+            <table id="t02">
+               
+                <tr>
+                    <td>MAX AMOUNT UTILIZED %</td>
+                    <td>{{max_amount_utilized_percentage}}</td>
+                </tr>
+                <tr>
+                    <td>MIN AMOUNT UTILIZED %</td>
+                    <td>{{min_amount_utilized_percentage}}</td>
+                </tr>
+                <tr>
+                    <td>AVERAGE AMOUNT UTILIZED %</td>
+                    <td>{{average_amount_utilized_percentage}}</td>
+                </tr>
+            </table>
+            </div>
+            <div class="page-padding"></div>
+            <div class = "lower-table">
+                <div class="table-header">TRADES COUNT</div>
+                <table id="t02">
+                   
+                    <tr>
+                        <td>MAX TRADES ACTIVE</td>
+                        <td>{{max_trades_active}}</td>
+                    </tr>
+                    <tr>
+                        <td>MIN TRADES ACTIVE</td>
+                        <td>{{min_trades_active}}</td>
+                    </tr>
+                    <tr>
+                        <td>AVERAGE TRADES ACTIVE</td>
+                        <td>{{average_trades_active}}</td>
+                    </tr>
+                </table>
+                </div>
+            </div>
+            <div id="drawdown-data-right">  <span>&nbsp;&nbsp;</span><span></span>
+                <img src={{Account_Utilization_Plot}} alt="Account_Utilization_Plot-mg" class="image-render"  width="50%"></img>
+            </div>
+        </div>
+        </section>
+        </div>
+
+        <div class="page-padding"></div>
+        <div id = "equityReport" class="pageLayout">
+            <header>
+                <div class="container">
+                    <div id="branding">
+                        <h1><i class="fa fa-rocket"></i> <span class="highlight">{{Report_Name}} - </span> EQUITY UTILIZATION</h1>
+                    </div>
+                </div>
+            </header>
+            <section id="equity-data">
+            <div id="equity-data-container">
+                <div class="equity-left"> <span>&nbsp;&nbsp;</span><span></span>
+                    <img src={{Equity_Wealth_Curve_Plot}} alt="Equity_Wealth_Curve_Plot-img" class="image-render"  width="50%" height="50%"></img>
+                </div>
+                <div class="page-padding"></div>
+                <div class="equity-right">  <span>&nbsp;&nbsp;</span><span></span>
+                    <img src={{Equity_Profit_Plot}} alt="Equity_Profit_Plot-img" class="image-render"  width="50%" height="50%"></img>
+                </div>
+               
+            </div>
+            <div class = "equity-image-container">  <span>&nbsp;&nbsp;</span><span></span>
+                <img src={{Volatility_Return_Plot}} alt="Volatility_Return_Plot-img" class="equityUtilization-img"></img>
+            </div>
+            </section>
+            </div>
+    <footer>
+        <p>1-2-3 Web Design, Copyright &copy; 2017</p>
+    </footer>
+</body>
+
+</html>

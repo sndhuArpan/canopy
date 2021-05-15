@@ -1,13 +1,14 @@
-from math import ceil
+import numpy as np
 from datetime import timedelta
-from Util import interval_enum
+from utils.Utils import Utils
+from utils.Utils import interval_enum
 
 
 class CalcBars:
 
     @staticmethod
     def get_days(start, end):
-        return (end - start).days
+        return np.busday_count(Utils.get_date_from_timestamp(start), Utils.get_date_from_timestamp(end))
 
     @staticmethod
     def get_weeks(start, end):
@@ -16,25 +17,29 @@ class CalcBars:
         return (monday2 - monday1).days / 7
 
     @staticmethod
-    def get_hours(minutes):
-        hours = ceil(minutes/60)
+    def get_hours(start, end, interval):
+        no_of_days = np.busday_count(Utils.get_date_from_timestamp(start), Utils.get_date_from_timestamp(end))
+        hours = no_of_days * Utils.get_candles_per_day(interval_enum.__getitem__(interval))
         return hours
 
     @staticmethod
-    def get_minutes(start, end):
-        timedelta = end - start
-        minutes = divmod(timedelta.total_seconds(), 60)
-        return minutes[0]
+    def get_minutes(hours):
+        #get_hours = CalcBars.get_hours(start, end)
+        minutes = hours * 60
+        #timedelta = end - start
+        #minutes = divmod(timedelta.total_seconds(), 60)
+        return minutes
 
     @staticmethod
     def bars_count(start, end, interval):
-        minutes = CalcBars.get_minutes(start, end)
+        hours = CalcBars.get_hours(start, end, interval_enum.ONE_HOUR.name)
+        minutes = CalcBars.get_minutes(hours)
         if interval == interval_enum.ONE_DAY.name:
             return CalcBars.get_days(start, end)
         if interval == interval_enum.ONE_WEEK.name:
             return CalcBars.get_weeks(start, end)
         if interval == interval_enum.ONE_HOUR.name:
-            return CalcBars.get_hours(minutes)
+            return CalcBars.get_hours(start, end, interval_enum.ONE_HOUR.name)
         if interval == interval_enum.FIFTEEN_MINUTE.name:
             return minutes/interval_enum.FIFTEEN_MINUTE.value
 

@@ -54,7 +54,7 @@ class AccountUtilization:
                      'upper_y_label': 'Account Util %',
                      'lower_y_label': 'Trades',
                      'title': 'Account_Utilization_Graph',
-                     'image_file': 'Account_Utilization_Graph'}
+                     'image_file': 'Account_Utilization_Graph.jpeg'}
         plot_obj = SubPlotSharedXAxis(**plot_dict)
         image_path = plot_obj.get_image(self.plot_dir)
         return image_path

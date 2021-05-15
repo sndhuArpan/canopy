@@ -71,6 +71,9 @@ class CalcPerformanceMatrix:
         total_losers = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].count()
         return round(loss_value/total_losers, 3)
 
+    def trade_charges(self):
+        return round(self.trade_df['trade_charges'].sum(),3)
+
     def risk_reward_ratio(self):
         count = 0
         ratio = 0
@@ -155,5 +158,5 @@ class CalcPerformanceMatrix:
         profit_list = self.EquityCurve_obj.wealth_and_profit_df['profit']
         start_equity = self.initial_account_value
         ruin_equity = self.ruin_equity
-        obj = MonteCarlosSimulation(profit_list, start_equity, ruin_equity)
+        obj = MonteCarlosSimulation(profit_list, start_equity, ruin_equity, self.plot_dir)
         return obj.save_image()

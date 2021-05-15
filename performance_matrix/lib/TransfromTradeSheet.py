@@ -4,6 +4,7 @@ import ast
 import pandas as pd
 import numpy as np
 import configparser as cfg_parser
+from performance_matrix.lib.CalcTradeCharges import CalcTradeCharges
 
 class TransformTradeSheet:
 
@@ -18,7 +19,7 @@ class TransformTradeSheet:
 
     def generate_report_dir(self):
         dir = os.path.splitext(os.path.basename(self.full_trade_sheet_path))[0]
-        final_dir =  os.path.join(os.path.join(os.path.join(Path(__file__).parent.parent, 'performance_report/temp/'), dir),
+        final_dir =  os.path.join(os.path.join(os.path.join(Path(__file__).parent.parent, 'performance_reports/temp/'), dir),
                                   self.run_type)
         if os.path.isdir(final_dir):
             return final_dir
@@ -153,14 +154,20 @@ class TransformTradeSheet:
             reward = np.NaN
         else:
             reward = sell_value - booked_value
-        risk_reward_ratio = (booked_value - stop_value)/reward
+        risk_reward_ratio = reward/(booked_value - stop_value)
+        if booked_value > 0:
+            broker = df_per_system_trade_id['broker'].iloc[0]
+            instrument_type = df_per_system_trade_id['instrument_type'].iloc[0]
+            trade_charges = CalcTradeCharges(broker, instrument_type, entry_datetime, buy_value, quantity, booked_date, sell_value, booked_quantity).charges
+        else:
+            trade_charges = None
         record_dict = {'system_trade_id': system_trade_id, 'symbol': symbol, 'trade_type' : trade_type,
                        'interval' : interval, 'quantity' : quantity, 'trade_status' : trade_status,
                        'entry_datetime' : entry_datetime, 'buy_value' : buy_value , 'exit_datetime' : exit_datetime,
                        'sell_value': sell_value, 'stop_value': stop_value, 'booked_value' : booked_value,
                        'realised_profit' : realised_profit, 'booked_quantity' : booked_quantity,
                        'risk_reward_ratio' : risk_reward_ratio, 'booked_date' : booked_date,
-                       'profit_percentage': profit_percentage}
+                       'profit_percentage': profit_percentage, 'trade_charges' : trade_charges}
         self.transform_sheet_df = self.transform_sheet_df.append(record_dict, ignore_index=True)
 
     def transform_trade_sheet(self):
@@ -171,7 +178,7 @@ class TransformTradeSheet:
         return os.path.join(self.trade_sheet_path, 'trade_sheet.csv')
 
 if __name__ == '__main__':
-    print(os.path.join(Path(__file__).parent, '../performance_report/temp/'))
+    print(os.path.join(Path(__file__).parent, '../performance_reports/temp/'))
 
 
 

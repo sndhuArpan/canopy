@@ -74,6 +74,7 @@ header{
     padding: 15px;
     color: #ffffff;
     background: #353637;
+    width: 50%;
   }
   #newsletter h1{
     float: left;
@@ -164,4 +165,61 @@ header{
   text-align: center;
   border: 2px solid rgb(236, 229, 229);
   border-bottom: #32a0c2 3px solid !important;
+  }
+
+  .pageLayout{
+  width: 98%;
+  margin-left: 20px;
+  margin-right: 20px;
+  border: 2px solid #3c3737;
+  padding: 15px;
+  }
+
+  .page-padding{
+    padding: 15px;
+  }
+
+  #drawdown-data{
+    padding: 15px;
+    /* color: #ffffff;
+    background: #353637;
+    width: 40%; */
+  }
+
+  #drawdown-data-left{
+    width: 40%;
+  }
+  #drawdown-data-right{
+    width: 40%;
+    padding-left: 50px;
+  }
+
+  #drawdown-data-container{
+    display: flex;
+  }
+
+  .equityUtilization-img{
+    width: 25%;
+    height: 25%;
+    margin-left: 36%;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  .equity-image-container{
+    border: 2px solid grey;
+  }
+  .equity-right{
+    border-left: 2px solid #332f2f;
+    width: 40%;
+    padding: 20px;
+  }
+
+  .equity-left{
+    width: 45%;
+    padding: 20px;
+  }
+  #equity-data-container{
+    border: 2px solid #615353;
+    display: flex
   }

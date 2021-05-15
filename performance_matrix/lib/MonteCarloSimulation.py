@@ -9,7 +9,8 @@ from performance_matrix.lib.matrix_charts.PlotBasicTableFromDF import PlotBasicT
 
 class MonteCarlosSimulation:
 
-    def __init__(self, profit_list, start_equity, ruin_equity, simulation=2500, lot_size=1):
+    def __init__(self, profit_list, start_equity, ruin_equity, plot_dir, simulation=2500, lot_size=1):
+        self.plot_dir = plot_dir
         self.profit_list = profit_list
         self.startequity = start_equity
         self.margin = ruin_equity
@@ -66,10 +67,11 @@ class MonteCarlosSimulation:
 
     def save_image(self):
         plot_dict = {'plot_df': self.simulator(),
-                     'image_file': 'MonteCarloSimiulation'
+                     'image_file': 'MonteCarloSimulation.jpeg'
                      }
         plot_obj = PlotBasicTableFromDF(**plot_dict)
-        plot_obj.get_image()
+        image_path = plot_obj.get_image(self.plot_dir)
+        return image_path
 
 
 if __name__ == '__main__':
