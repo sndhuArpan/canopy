@@ -1,7 +1,7 @@
 import os
 from performance_matrix.lib.CalcPerformanceMatrix import CalcPerformanceMatrix
 from performance_matrix.lib.TransfromTradeSheet import TransformTradeSheet
-from performance_matrix.performance_report.src_html.RenderHTML import RenderHTML
+from performance_matrix.lib.src_html.RenderHTML import RenderHTML
 
 
 def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte_carlo):
@@ -15,6 +15,7 @@ def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte
     print('Get Basic Values')
     backtest_report_dict['Report_Name'] = os.path.splitext(os.path.basename(report_file))[0] + ' - ' + run_type
     backtest_report_dict['Net_Profit'] = Calc_Obj.net_profit()
+    backtest_report_dict['Net_Charges'] = Calc_Obj.trade_charges()
     backtest_report_dict['profit_factor'] = Calc_Obj.profit_factor()
     backtest_report_dict['total_no_trade'] = Calc_Obj.total_no_trade()
     backtest_report_dict['win_rate'] = Calc_Obj.win_rate()
@@ -53,8 +54,9 @@ def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte
     backtest_report_dict['Equity_Profit_Plot'] = Calc_Obj.equity_curve().get('Equity_Profit_Plot')
     backtest_report_dict['Volatility_Return_Plot'] = Calc_Obj.equity_curve().get('Volatility_Return_Plot')
     if monte_carlo:
-        print('Running Monte Carlo Simulation :')
+        print('Running Monte Carlo Simulation ')
         backtest_report_dict['Monte_Carlo_Plot'] = Calc_Obj.monte_carlo_simulation()
+    backtest_report_dict['css_path'] = '/Users/Sandhu/performance_reports/src_html/css'
     return backtest_report_dict
 
 def render_html(backtext_result):
@@ -65,12 +67,12 @@ def render_html(backtext_result):
 
 
 if __name__ == '__main__':
-    report_file = '/Users/Sandhu/Downloads/basic_trend.csv'
-    run_type = 'fresh_run'
+    report_file = '/Users/Sandhu/Downloads/narrow_range_4_trail.csv'
+    run_type = 'Second_run'
     initial_amount_value = 200000
-    ruin_equity = 150000
+    ruin_equity = 370000
     volatity = 30
     monte_carlo = False
     backtest_result = run_backtest(report_file, run_type, initial_amount_value, ruin_equity, monte_carlo)
     print(backtest_result)
-    #render_html(backtest_result)
+    render_html(backtest_result)

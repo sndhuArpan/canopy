@@ -37,7 +37,7 @@ class EquityCurve:
                      'x_axis_label' : 'Account Date',
                      'y_axis_label': 'Account value',
                      'title' : 'Equity Curve by Initial Account :' + str(self.initial_account_value),
-                     'image_file': 'Equity_To_Wealth_Graph'
+                     'image_file': 'Equity_To_Wealth_Graph.jpeg'
                      }
         plot_obj = PlotBasicLineChart(**plot_dict)
         image_path = plot_obj.get_image(self.plot_dir)
@@ -49,7 +49,7 @@ class EquityCurve:
                      'x_axis_label': 'Account Date',
                      'y_axis_label': 'Profit',
                      'title': 'Equity Curve by Trade Profit',
-                     'image_file': 'Equity_To_Profit_Graph'
+                     'image_file': 'Equity_To_Profit_Graph.jpeg'
                      }
         plot_obj = PlotBasicLineChart(**plot_dict)
         image_path = plot_obj.get_image(self.plot_dir)
@@ -65,7 +65,7 @@ class EquityCurve:
                      'upper_y_label': 'wealth',
                      'lower_y_label': 'volatility',
                      'title': 'Return by Volatility',
-                     'image_file': 'Return_By_Volatility_Graph'}
+                     'image_file': 'Return_By_Volatility_Graph.jpeg'}
         plot_obj = SubPlotSharedXAxis(**plot_dict)
         image_path = plot_obj.get_image(self.plot_dir)
         return image_path
