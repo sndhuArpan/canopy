@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width">
     <meta name="description" content="Affordable Web Design For Small And Medium-sized Companies">
     <meta name="author" content="Sebastian Eschweiler">
-    <title>Canopy Design | Welcome</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>1-2-3 Web Design | Welcome</title>
+    <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/font-awesome.min.css">
 </head>
 
@@ -69,6 +69,16 @@
                 <td>{{cagr}}</td>
                 <td>{{calmar_ratio}}</td>
             </tr>
+            <tr id="row2">
+                <th>NET CHARGES</th>
+                <th>-</th>
+                <th>-</th>
+            </tr>
+            <tr>
+                <td>{{net_charges}}</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
         </table>
     </section>
     <div class="page-padding"></div>
@@ -106,42 +116,35 @@
             <div id="drawdown-data-container">
             <div id="drawdown-data-left">
             <table id="t02">
+                <tr id="row1">
+                    <th>MAXIMUM DRAWDOWN</th>
+                    <th>MAXIMUM DRAWDOWN DATE</th>
+                    <th>DRAWDOWN START TIME</th>
+                    <th>DRAWDOWN TIME</th>
+                </tr>
                 <tr>
-                    <td>MAXIMUM DRAWDOWN</td>
                     <td>{{maximum_drawdown}}</td>
-                </tr>
-                <tr id="t2-row2">
-                    <td>MAXIMUM DRAWDOWN DATE</td>
                     <td>{{max_drawdown_date}}</td>
-                </tr>
-                <tr>
-                    <td>DRAWDOWN START TIME</td>
                     <td>{{draw_down_start_time}}</td>
-                </tr>
-                <tr>
-                    <td>DRAWDOWN TIME</td>
                     <td>{{draw_down_time}}</td>
                 </tr>
+                <tr id="row1">
+                    <th>DRAWDOWN TRADE NUMBER</th>
+                    <th>RECOVERY DATE</th>
+                    <th>RECOVERY TIME</th>
+                    <th>RECOVERY TRADE NUMBER</th>
+                </tr>
                 <tr>
-                    <td>DRAWDOWN TRADE NUMBER</td>
                     <td>{{draw_down_trade_number}}</td>
-                </tr>
-                <tr>
-                    <td>RECOVERY DATE</td>
                     <td>{{recovery_date}}</td>
-                </tr>
-                <tr>
-                    <td>RECOVERY TIME</td>
                     <td>{{recovery_time}}</td>
-                </tr>
-                <tr>
-                    <td>RECOVERY TRADE NUMBER</td>
                     <td>{{recovery_trade_number}}</td>
                 </tr>
             </table>
             </div>
+            <div class="page-padding"></div>
             <div id="drawdown-data-right">  <span>&nbsp;&nbsp;</span><span></span>
-                <img src={{Drawdown_Plot}} alt="Drawdown_Plot-img" class="image-render"  width="50%" ></img>
+                <img src=./img/{{Drawdown_Plot}} alt="Drawdown_Plot-img" class="image-render"  width="50%" ></img>
             </div>
         </div>
         </section>
@@ -156,9 +159,9 @@
                 </div>
             </div>
         </header>
-        <section id="drawdown-data">
-            <div id="drawdown-data-container">
-            <div id="drawdown-data-left">
+        <section id="account-data">
+            <div id="account-data-container">
+            <div id="account-data-tables">
             <div class = "upper-table">
                 <div class="table-header">AMOUNT PERCENTAGE</div>
             <table id="t02">
@@ -197,8 +200,9 @@
                 </table>
                 </div>
             </div>
-            <div id="drawdown-data-right">  <span>&nbsp;&nbsp;</span><span></span>
-                <img src={{Account_Utilization_Plot}} alt="Account_Utilization_Plot-mg" class="image-render"  width="50%"></img>
+            <div class="page-padding"></div>
+            <div>  <span>&nbsp;&nbsp;</span><span></span>
+                <img src=./img/{{Account_Utilization_Plot}} alt="Account_Utilization_Plot-mg" class="image-render"  width="60%"></img>
             </div>
         </div>
         </section>
@@ -216,19 +220,35 @@
             <section id="equity-data">
             <div id="equity-data-container">
                 <div class="equity-left"> <span>&nbsp;&nbsp;</span><span></span>
-                    <img src={{Equity_Wealth_Curve_Plot}} alt="Equity_Wealth_Curve_Plot-img" class="image-render"  width="50%" height="50%"></img>
+                    <img src=./img/{{Equity_Wealth_Curve_Plot}} alt="Equity_Wealth_Curve_Plot-img" class="image-render"  width="100%" ></img>
                 </div>
                 <div class="page-padding"></div>
                 <div class="equity-right">  <span>&nbsp;&nbsp;</span><span></span>
-                    <img src={{Equity_Profit_Plot}} alt="Equity_Profit_Plot-img" class="image-render"  width="50%" height="50%"></img>
+                    <img src=./img/{{Equity_Profit_Plot}} alt="Equity_Profit_Plot-img" class="image-render"  width="100%" ></img>
                 </div>
                
             </div>
             <div class = "equity-image-container">  <span>&nbsp;&nbsp;</span><span></span>
-                <img src={{Volatility_Return_Plot}} alt="Volatility_Return_Plot-img" class="equityUtilization-img"></img>
+                <img src=./img/{{Volatility_Return_Plot}} alt="Volatility_Return_Plot-img" class="equityUtilization-img" width="100%" ></img>
             </div>
             </section>
             </div>
+            <div class="page-padding"></div>
+            <div id = "monteCarloSimulation" class="pageLayout">
+                <header>
+                    <div class="container">
+                        <div id="branding">
+                            <h1><i class="fa fa-rocket"></i> <span class="highlight">{{Report_Name}} - </span> MONTE CARLO SIMULATION</h1>
+                        </div>
+                    </div>
+                </header>
+                <section id="monteCarloSimulation-data">
+                <div id="monteCarloSimulation-data-container">
+                    <div class=""> <span>&nbsp;&nbsp;</span><span></span>
+                        <img src=./img/{{Monte_Carlo_Plot}} alt="Monte_Carlo_Plot-img" class="image-render"  width="100%" ></img>
+                    </div>
+                </section>
+                </div>
     <footer>
         <p>1-2-3 Web Design, Copyright &copy; 2017</p>
     </footer>

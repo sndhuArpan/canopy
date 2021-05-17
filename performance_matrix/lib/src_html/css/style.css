@@ -187,23 +187,23 @@ header{
   }
 
   #drawdown-data-left{
-    width: 40%;
+    /* width: 40%; */
   }
   #drawdown-data-right{
-    width: 40%;
-    padding-left: 50px;
+    /* width: 40%;
+    padding-left: 50px; */
   }
 
   #drawdown-data-container{
-    display: flex;
+    /* display: flex; */
   }
 
   .equityUtilization-img{
-    width: 25%;
-    height: 25%;
-    margin-left: 36%;
+    width: 60%;
+    margin-left: 20%;
     margin-top: 20px;
     margin-bottom: 20px;
+    margin-right: 20%;
   }
 
   .equity-image-container{
@@ -211,15 +211,25 @@ header{
   }
   .equity-right{
     border-left: 2px solid #332f2f;
-    width: 40%;
+    width: 50%;
     padding: 20px;
   }
 
   .equity-left{
-    width: 45%;
+    width: 50%;
     padding: 20px;
   }
   #equity-data-container{
     border: 2px solid #615353;
     display: flex
+  }
+
+  .lower-table{
+    width: 50%;
+  }
+  .upper-table{
+    width: 50%;
+  }
+  #account-data-tables{
+    display: flex;
   }
