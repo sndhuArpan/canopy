@@ -7,6 +7,7 @@ from performance_matrix.lib.AccountUtilization import AccountUtilization
 from performance_matrix.lib.MonteCarloSimulation import MonteCarlosSimulation
 from performance_matrix.lib.EquityCurve import EquityCurve
 from fractions import Fraction
+import shutil
 import os
 import pandas as pd
 
@@ -15,7 +16,9 @@ class CalcPerformanceMatrix:
 
     def __init__(self, transformed_trade_sheet_path, initial_account_value, ruin_equity, volatility_period=30):
         self.trade_df = pd.read_csv(transformed_trade_sheet_path)
-        self.plot_dir = os.path.dirname(transformed_trade_sheet_path)
+        self.base_dir = os.path.dirname(transformed_trade_sheet_path)
+        self.plot_dir = os.path.join(os.path.dirname(transformed_trade_sheet_path), 'img')
+        self._create_css_and_img_folder()
         self._convert_df_datetime()
         self.initial_account_value = initial_account_value
         self.ruin_equity = ruin_equity
@@ -23,6 +26,11 @@ class CalcPerformanceMatrix:
         self.AccountUtilization_obj = AccountUtilization(self.trade_df, self.initial_account_value, self.plot_dir)
         self.EquityCurve_obj = EquityCurve(self.trade_df, self.initial_account_value, self.volatility_period, self.plot_dir)
         self.CalcDrawDown_obj = CalcDrawDown(self.trade_df, self.initial_account_value, self.plot_dir)
+
+    def _create_css_and_img_folder(self):
+        to_path = self.base_dir
+        from_path = '/Users/Sandhu/canopy/canopy/performance_matrix/lib/src_html'
+        shutil.copytree(from_path, to_path, dirs_exist_ok=True)
 
     def _convert_df_datetime(self):
         self.trade_df['entry_datetime'] = self.trade_df['entry_datetime'].astype('datetime64[ns]')
@@ -51,7 +59,8 @@ class CalcPerformanceMatrix:
         total_winners = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].count()
         total_losers = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].count()
         win_rate = round(total_winners/total_losers, 3)
-        return str(Fraction(win_rate).limit_denominator(4)), win_rate
+        #return str(Fraction(win_rate).limit_denominator(4)), win_rate
+        return win_rate
 
     def average_win(self):
         total_winners = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].count()

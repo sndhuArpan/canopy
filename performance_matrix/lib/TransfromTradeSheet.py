@@ -1,9 +1,11 @@
 import os
+import shutil
 from pathlib import Path
 import ast
 import pandas as pd
 import numpy as np
-import configparser as cfg_parser
+from utils.Utils import Utils
+
 from performance_matrix.lib.CalcTradeCharges import CalcTradeCharges
 
 class TransformTradeSheet:
@@ -22,17 +24,19 @@ class TransformTradeSheet:
         final_dir =  os.path.join(os.path.join(os.path.join(Path(__file__).parent.parent, 'performance_reports/temp/'), dir),
                                   self.run_type)
         if os.path.isdir(final_dir):
-            return final_dir
+            if os.path.exists(final_dir):
+                shutil.rmtree(final_dir)
+                os.makedirs(final_dir, exist_ok=True)
+                return final_dir
         else:
             os.makedirs(final_dir, exist_ok=True)
             return final_dir
 
     def _get_config_dict(self):
-        self.config = cfg_parser.RawConfigParser()
         self.current_dir = Path(os.path.dirname(os.path.realpath(__file__))).parent
         self.config_path = os.path.join(self.current_dir, 'config/config.cfg')
-        self.config.read(self.config_path)
-        return dict(self.config.items('GLOBAL'))
+        dict_rt = Utils.get_config_dict(self.config_path, 'GLOBAL')
+        return dict_rt
 
     def _create_df(self):
         trade_sheet_df = pd.read_csv(self.full_trade_sheet_path, skip_blank_lines=True)
@@ -129,7 +133,19 @@ class TransformTradeSheet:
         if trade_type == 'buy':
             return sell_value - booked_value, ((sell_value - booked_value)/booked_value)*100
         if trade_type == 'sell':
-            return buy_value - booked_value, ((buy_value - booked_value)/booked_value)*100
+            return booked_value - buy_value, ((booked_value - buy_value)/booked_value)*100
+
+    @staticmethod
+    def get_risk_reward(trade_type, realised_profit, booked_value, buy_value, sell_value, stop_loss):
+        if realised_profit <= 0:
+            return None
+        else:
+            if trade_type == 'buy':
+                risk = buy_value - stop_loss
+                return realised_profit/risk
+            else:
+                risk = stop_loss - sell_value
+                return realised_profit/risk
 
     def _insert_transform_sheet_details(self, df_per_system_trade_id):
         df_per_system_trade_id = df_per_system_trade_id.copy()
@@ -150,11 +166,8 @@ class TransformTradeSheet:
                                                                                           buy_value, sell_value)
         realised_profit, profit_percentage = TransformTradeSheet.get_profit(trade_status, trade_type, booked_value, buy_value, sell_value)
         stop_value = df_per_system_trade_id['stop_loss'].iloc[0] * booked_quantity
-        if sell_value - booked_value <= 1:
-            reward = np.NaN
-        else:
-            reward = sell_value - booked_value
-        risk_reward_ratio = reward/(booked_value - stop_value)
+        risk_reward_ratio = TransformTradeSheet.get_risk_reward(trade_type, realised_profit,
+                                                                booked_value, buy_value, sell_value, stop_value)
         if booked_value > 0:
             broker = df_per_system_trade_id['broker'].iloc[0]
             instrument_type = df_per_system_trade_id['instrument_type'].iloc[0]

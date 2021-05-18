@@ -6,7 +6,7 @@ class RenderHTML:
 
     def __init__(self, html_template_file, render_kwarg):
         self.html_template_file = html_template_file
-        self.base_dir = os.path.dirname(os.path.realpath(__file__))
+        self.base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src_html')
         self.rendered_html_text  = self.render(**render_kwarg)
 
     def render(self, **kwargs):

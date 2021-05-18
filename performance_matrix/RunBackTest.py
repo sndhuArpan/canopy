@@ -1,7 +1,8 @@
 import os
+from pathlib import Path
 from performance_matrix.lib.CalcPerformanceMatrix import CalcPerformanceMatrix
 from performance_matrix.lib.TransfromTradeSheet import TransformTradeSheet
-from performance_matrix.lib.src_html.RenderHTML import RenderHTML
+from performance_matrix.lib.RenderHTML import RenderHTML
 
 
 def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte_carlo):
@@ -15,7 +16,7 @@ def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte
     print('Get Basic Values')
     backtest_report_dict['Report_Name'] = os.path.splitext(os.path.basename(report_file))[0] + ' - ' + run_type
     backtest_report_dict['Net_Profit'] = Calc_Obj.net_profit()
-    backtest_report_dict['Net_Charges'] = Calc_Obj.trade_charges()
+    backtest_report_dict['net_charges'] = Calc_Obj.trade_charges()
     backtest_report_dict['profit_factor'] = Calc_Obj.profit_factor()
     backtest_report_dict['total_no_trade'] = Calc_Obj.total_no_trade()
     backtest_report_dict['win_rate'] = Calc_Obj.win_rate()
@@ -40,7 +41,7 @@ def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte
     backtest_report_dict['recovery_date'] = Calc_Obj.drawdown_matrix().get('recovery_date')
     backtest_report_dict['recovery_time'] = Calc_Obj.drawdown_matrix().get('recovery_time')
     backtest_report_dict['recovery_trade_number'] = Calc_Obj.drawdown_matrix().get('recovery_trade_number')
-    backtest_report_dict['Drawdown_Plot'] = Calc_Obj.drawdown_matrix_plot()
+    backtest_report_dict['Drawdown_Plot'] = Path(Calc_Obj.drawdown_matrix_plot()).name
     print('Get Account Utilization')
     backtest_report_dict['max_amount_utilized_percentage'] = Calc_Obj.max_account_utilized().get('max_amount_utilized_percentage')
     backtest_report_dict['min_amount_utilized_percentage'] = Calc_Obj.max_account_utilized().get('min_amount_utilized_percentage')
@@ -48,31 +49,39 @@ def run_backtest(report_file, run_type ,initial_amount_value, ruin_equity, monte
     backtest_report_dict['max_trades_active'] = Calc_Obj.max_account_utilized().get('max_trades_active')
     backtest_report_dict['min_trades_active'] = Calc_Obj.max_account_utilized().get('min_trades_active')
     backtest_report_dict['average_trades_active'] = Calc_Obj.max_account_utilized().get('average_trades_active')
-    backtest_report_dict['Account_Utilization_Plot'] = Calc_Obj.account_uitlization_plot()
+    backtest_report_dict['Account_Utilization_Plot'] = Path(Calc_Obj.account_uitlization_plot()).name
     print('Get Equity Curve')
-    backtest_report_dict['Equity_Wealth_Curve_Plot'] = Calc_Obj.equity_curve().get('Equity_Wealth_Curve_Plot')
-    backtest_report_dict['Equity_Profit_Plot'] = Calc_Obj.equity_curve().get('Equity_Profit_Plot')
-    backtest_report_dict['Volatility_Return_Plot'] = Calc_Obj.equity_curve().get('Volatility_Return_Plot')
+    backtest_report_dict['Equity_Wealth_Curve_Plot'] = Path(Calc_Obj.equity_curve().get('Equity_Wealth_Curve_Plot')).name
+    backtest_report_dict['Equity_Profit_Plot'] = Path(Calc_Obj.equity_curve().get('Equity_Profit_Plot')).name
+    backtest_report_dict['Volatility_Return_Plot'] = Path(Calc_Obj.equity_curve().get('Volatility_Return_Plot')).name
     if monte_carlo:
         print('Running Monte Carlo Simulation ')
-        backtest_report_dict['Monte_Carlo_Plot'] = Calc_Obj.monte_carlo_simulation()
-    backtest_report_dict['css_path'] = '/Users/Sandhu/performance_reports/src_html/css'
+        backtest_report_dict['Monte_Carlo_Plot'] = Path(Calc_Obj.monte_carlo_simulation()).name
+    backtest_report_dict['base_dir'] = Calc_Obj.base_dir
     return backtest_report_dict
 
 def render_html(backtext_result):
     Render_Obj = RenderHTML('index.html', backtext_result)
-    base_dir = os.path.dirname(backtext_result.get('Drawdown_Plot'))
+    base_dir = backtext_result.get('base_dir')
     new_html_file = os.path.join(base_dir, 'backtest_report.html')
     Render_Obj.generate_new_file(new_html_file)
 
 
 if __name__ == '__main__':
-    report_file = '/Users/Sandhu/Downloads/narrow_range_4_trail.csv'
-    run_type = 'Second_run'
-    initial_amount_value = 200000
-    ruin_equity = 370000
+    report_file = '/Users/Sandhu/Downloads/IntraRangeBreak.csv'
+    run_type = 'Buy_sell_both_run'
+    initial_amount_value = 100000
+    ruin_equity = 70000
     volatity = 30
     monte_carlo = False
     backtest_result = run_backtest(report_file, run_type, initial_amount_value, ruin_equity, monte_carlo)
-    print(backtest_result)
+    #print(backtest_result)
     render_html(backtest_result)
+
+# import pdfkit
+#
+# wkhtmltopdf_options = {
+#     'enable-local-file-access': None
+# }
+#
+# pdfkit.from_file('backtest_report.html', 'sample.pdf', options = wkhtmltopdf_options)
