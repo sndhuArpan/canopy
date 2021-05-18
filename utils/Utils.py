@@ -3,9 +3,15 @@ import numpy as np
 import pandas as pd
 import os
 from datetime import datetime
+import configparser as cfg_parser
 
 class Utils:
 
+    @staticmethod
+    def get_config_dict(abs_file_path, mode):
+        config = cfg_parser.RawConfigParser()
+        config.read(abs_file_path)
+        return dict(config.items(mode))
 
     @staticmethod
     def get_symbol_token(name):
