@@ -21,5 +21,6 @@ class RenderHTML:
         f = open(new_file_name, 'a')
         f.write(self.rendered_html_text)
         f.close()
+        return new_file_name
 
 

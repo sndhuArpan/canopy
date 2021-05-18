@@ -1,4 +1,5 @@
 import os
+import webbrowser
 from pathlib import Path
 from performance_matrix.lib.CalcPerformanceMatrix import CalcPerformanceMatrix
 from performance_matrix.lib.TransfromTradeSheet import TransformTradeSheet
@@ -65,18 +66,20 @@ def render_html(backtext_result):
     base_dir = backtext_result.get('base_dir')
     new_html_file = os.path.join(base_dir, 'backtest_report.html')
     Render_Obj.generate_new_file(new_html_file)
+    return new_html_file
 
 
 if __name__ == '__main__':
-    report_file = '/Users/Sandhu/Downloads/IntraRangeBreak.csv'
+    report_file = '/Users/Sandhu/Downloads/IntraRangeBreak-1.csv'
     run_type = 'Buy_sell_both_run'
     initial_amount_value = 100000
     ruin_equity = 70000
     volatity = 30
-    monte_carlo = False
+    monte_carlo = True
     backtest_result = run_backtest(report_file, run_type, initial_amount_value, ruin_equity, monte_carlo)
     #print(backtest_result)
-    render_html(backtest_result)
+    file_name = render_html(backtest_result)
+    webbrowser.open('file://' + file_name)
 
 # import pdfkit
 #

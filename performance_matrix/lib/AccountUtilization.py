@@ -39,9 +39,9 @@ class AccountUtilization:
         max_trades_active = self.account_util_df['active_trades'].max()
         min_trades_active = self.account_util_df['active_trades'].min()
         average_trades_active = self.account_util_df['active_trades'].mean()
-        return {'max_amount_utilized_percentage': max_amount_utilized_percentage,
-                'min_amount_utilized_percentage': min_amount_utilized_percentage,
-                'average_amount_utilized_percentage': average_amount_utilized_percentage,
+        return {'max_amount_utilized_percentage': round(max_amount_utilized_percentage,2),
+                'min_amount_utilized_percentage': round(min_amount_utilized_percentage,2),
+                'average_amount_utilized_percentage': round(average_amount_utilized_percentage,2),
                 'max_trades_active': max_trades_active,
                 'min_trades_active': min_trades_active,
                 'average_trades_active': average_trades_active}

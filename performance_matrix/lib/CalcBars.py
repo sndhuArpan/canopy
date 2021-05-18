@@ -23,17 +23,17 @@ class CalcBars:
         return hours
 
     @staticmethod
-    def get_minutes(hours):
+    def get_minutes(start, end):
         #get_hours = CalcBars.get_hours(start, end)
-        minutes = hours * 60
-        #timedelta = end - start
-        #minutes = divmod(timedelta.total_seconds(), 60)
-        return minutes
+        #minutes = ((start - end).seconds)/60
+        timedelta = end - start
+        minutes = divmod(timedelta.total_seconds(), 60)
+        return minutes[0]
+
 
     @staticmethod
     def bars_count(start, end, interval):
         hours = CalcBars.get_hours(start, end, interval_enum.ONE_HOUR.name)
-        minutes = CalcBars.get_minutes(hours)
         if interval == interval_enum.ONE_DAY.name:
             return CalcBars.get_days(start, end)
         if interval == interval_enum.ONE_WEEK.name:
@@ -41,7 +41,7 @@ class CalcBars:
         if interval == interval_enum.ONE_HOUR.name:
             return CalcBars.get_hours(start, end, interval_enum.ONE_HOUR.name)
         if interval == interval_enum.FIFTEEN_MINUTE.name:
-            return minutes/interval_enum.FIFTEEN_MINUTE.value
+            return CalcBars.get_minutes(start, end)/interval_enum.FIFTEEN_MINUTE.value
 
 
 

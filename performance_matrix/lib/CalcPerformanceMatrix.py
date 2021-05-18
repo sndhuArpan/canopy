@@ -42,13 +42,13 @@ class CalcPerformanceMatrix:
         return (initial_value * percentage)/100
 
     def net_profit(self):
-        return round(self.trade_df['realised_profit'].sum(),3)
+        return int(self.trade_df['realised_profit'].sum())
 
     def profit_factor(self):
         profit_value = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].sum()
         loss_value = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].sum()
         profit_factor = profit_value / abs(loss_value)
-        return round(profit_factor, 3)
+        return str(Fraction(profit_factor).limit_denominator(100))
 
     def total_no_trade(self):
         null_trades = self.trade_df['realised_profit'].isna().sum()
@@ -58,30 +58,29 @@ class CalcPerformanceMatrix:
     def win_rate(self):
         total_winners = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].count()
         total_losers = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].count()
-        win_rate = round(total_winners/total_losers, 3)
-        #return str(Fraction(win_rate).limit_denominator(4)), win_rate
-        return win_rate
+        win_rate = round(total_winners/total_losers, 2)
+        return str(Fraction(win_rate).limit_denominator(10))
 
     def average_win(self):
         total_winners = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].count()
         profit_value = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].sum()
-        return round(profit_value/total_winners, 3)
+        return int(profit_value/total_winners)
 
     def maximum_profit_per_trade(self):
         max_profit = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].max()
-        return max_profit
+        return int(max_profit)
 
     def maximum_loss_per_trade(self):
         max_loss = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].min()
-        return max_loss
+        return int(max_loss)
 
     def average_loss(self):
         loss_value = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].sum()
         total_losers = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].count()
-        return round(loss_value/total_losers, 3)
+        return int(loss_value/total_losers)
 
     def trade_charges(self):
-        return round(self.trade_df['trade_charges'].sum(),3)
+        return int(self.trade_df['trade_charges'].sum())
 
     def risk_reward_ratio(self):
         count = 0
@@ -90,10 +89,10 @@ class CalcPerformanceMatrix:
             if row['risk_reward_ratio'] >= 0:
                 ratio = ratio + row['risk_reward_ratio']
                 count = count + 1
-        return str(Fraction(ratio/count).limit_denominator(4))
+        return str(Fraction(ratio/count).limit_denominator(100))
 
     def drawdown_matrix(self):
-        dd_dict = {'maximum_drawdown': self.CalcDrawDown_obj.maximum_drawdown,
+        dd_dict = {'maximum_drawdown': round(self.CalcDrawDown_obj.maximum_drawdown,2),
                    'max_drawdown_date': self.CalcDrawDown_obj.max_drawdown_date,
                    'draw_down_start_time': self.CalcDrawDown_obj.draw_down_start_time,
                    'draw_down_time': self.CalcDrawDown_obj.draw_down_time,
@@ -138,13 +137,13 @@ class CalcPerformanceMatrix:
     def calmar_ratio(self):
         cagr = self.cagr()
         dd = self.drawdown_matrix().get('maximum_drawdown')
-        return abs(cagr/dd)
+        return round(abs(cagr/dd), 2)
 
     def sharpe_ratio(self, rf=0.05):
         returns = self.EquityCurve_obj.wealth_and_profit_df['log_Ret']
-        volatility = returns.std() * np.sqrt(self.volatility_period)
+        volatility = returns.std() * np.sqrt(252)
         sharpe_ratio = (returns.mean() - rf) / volatility
-        return sharpe_ratio
+        return round(sharpe_ratio,2)
 
     def cagr(self):
         end_date = self.EquityCurve_obj.wealth_and_profit_df['booked_date'].max()
@@ -154,7 +153,8 @@ class CalcPerformanceMatrix:
             return None
         else:
             account_final_value = self.EquityCurve_obj.wealth_and_profit_df.iloc[-1]['wealth']
-            return (account_final_value / self.initial_account_value) ** (1/period) - 1
+            cagr_rt = (account_final_value / self.initial_account_value) ** (1/period) - 1
+            return round(cagr_rt*100, 2)
 
     def equity_curve(self):
         dict_rt = {}
