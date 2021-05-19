@@ -42,10 +42,10 @@ class Bees(strategy_wrapper):
         for share in self.share_name:
             self.bee_data = self.data_list.get(share + '_' + self.time_interval[0].name)
             self.bee_data.index = np.arange(0, len(self.bee_data))
-            pivots = peak_valley_pivots(self.bee_data['close'].values, 0.035, -0.035)
+            pivots = peak_valley_pivots(self.bee_data['close'].values, 0.015, -0.015)
             ts_pivots = pd.Series(self.bee_data['close'], index=self.bee_data['close'].index)
             ts_pivots = ts_pivots[pivots != 0]
-            self.bee_data['close'].plot()
+            # self.bee_data['close'].plot()
             ts_pivots.plot(style='g-o');
             # for ind in self.bee_data.index:
             #     if ind < 10:
