@@ -20,7 +20,8 @@ class SubPlotSharedXAxis:
         upper_y_label = self.upper_y_label
         lower_y_label = self.lower_y_label
         title = self.title
-        ax1.set_ylim([min(y), max(y)])
+        if len(y) > 0:
+            ax1.set_ylim([min(y), max(y)])
         ax1.plot(x, y)
         if hasattr(self, 'upper_fill_between_color'):
             ax1.fill_between(x, y, color=self.upper_fill_between_color)
@@ -37,7 +38,8 @@ class SubPlotSharedXAxis:
         # remove vertical gap between subplots
         plt.subplots_adjust(hspace=.0)
         # plt.tight_layout()
-        ax1.fill_between(x, y)
+        if len(x) > 0 and len(y) > 0:
+            ax1.fill_between(x, y)
         plt.title(title)
         plt.tight_layout()
         # plt.fill_between(drawdown_series)

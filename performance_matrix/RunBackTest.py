@@ -70,8 +70,8 @@ def render_html(backtext_result):
 
 
 if __name__ == '__main__':
-    report_file = '/Users/Sandhu/Downloads/IntraRangeBreak-1.csv'
-    run_type = 'Buy_sell_both_run'
+    report_file = '/Users/Sandhu/Downloads/BB_High_Low_Loss_Only.csv'
+    run_type = 'Test_RUN'
     initial_amount_value = 100000
     ruin_equity = 70000
     volatity = 30

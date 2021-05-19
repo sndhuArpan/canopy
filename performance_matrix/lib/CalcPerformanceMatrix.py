@@ -11,6 +11,9 @@ import shutil
 import os
 import pandas as pd
 
+import warnings
+warnings.filterwarnings("ignore")
+
 
 class CalcPerformanceMatrix:
 
@@ -48,6 +51,8 @@ class CalcPerformanceMatrix:
         profit_value = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].sum()
         loss_value = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].sum()
         profit_factor = profit_value / abs(loss_value)
+        if profit_factor == float("inf") or float("-inf"):
+            return profit_factor
         return str(Fraction(profit_factor).limit_denominator(100))
 
     def total_no_trade(self):
@@ -59,27 +64,40 @@ class CalcPerformanceMatrix:
         total_winners = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].count()
         total_losers = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].count()
         win_rate = round(total_winners/total_losers, 2)
+        if win_rate == float("inf") or float("-inf"):
+            return win_rate
         return str(Fraction(win_rate).limit_denominator(10))
 
     def average_win(self):
         total_winners = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].count()
         profit_value = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].sum()
+        if total_winners == 0 or profit_value == 0:
+            return 0
         return int(profit_value/total_winners)
 
     def maximum_profit_per_trade(self):
         max_profit = self.trade_df.loc[self.trade_df['realised_profit'] > 0, 'realised_profit'].max()
+        if np.isnan(max_profit):
+            return 0
         return int(max_profit)
 
     def maximum_loss_per_trade(self):
         max_loss = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].min()
+        if np.isnan(max_loss):
+            return 0
         return int(max_loss)
 
     def average_loss(self):
         loss_value = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].sum()
         total_losers = self.trade_df.loc[self.trade_df['realised_profit'] < 0, 'realised_profit'].count()
+        if loss_value == 0 or total_losers == 0:
+            return 0
         return int(loss_value/total_losers)
 
     def trade_charges(self):
+        total_charges = self.trade_df['trade_charges'].sum()
+        if np.isnan(total_charges):
+            return 0
         return int(self.trade_df['trade_charges'].sum())
 
     def risk_reward_ratio(self):
@@ -89,6 +107,8 @@ class CalcPerformanceMatrix:
             if row['risk_reward_ratio'] >= 0:
                 ratio = ratio + row['risk_reward_ratio']
                 count = count + 1
+        if count == 0:
+            return float("inf")
         return str(Fraction(ratio/count).limit_denominator(100))
 
     def drawdown_matrix(self):
