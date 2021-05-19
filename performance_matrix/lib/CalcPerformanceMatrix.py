@@ -137,7 +137,10 @@ class CalcPerformanceMatrix:
     def calmar_ratio(self):
         cagr = self.cagr()
         dd = self.drawdown_matrix().get('maximum_drawdown')
-        return round(abs(cagr/dd), 2)
+        if cagr is None or dd is None:
+            return None
+        else:
+            return round(abs(cagr/dd), 2)
 
     def sharpe_ratio(self, rf=0.05):
         returns = self.EquityCurve_obj.wealth_and_profit_df['log_Ret']
