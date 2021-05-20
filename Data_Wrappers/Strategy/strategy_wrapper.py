@@ -1,4 +1,4 @@
-from Util import Util
+from utils.Utils import Utils as Util
 from Data_Wrappers.Angel_Broker.Angel_Broker_Wrapper import Angel_Broker_Wrapper
 
 
@@ -12,11 +12,11 @@ class strategy_wrapper:
         broker = kwargs.get('broker')
         indicators = kwargs.get('indicators')
         self.data_list = {}
-        for share in share_name:
-            print(share)
-            share_token = Util.get_symbol_token(share)
-            if broker == 'angle':
-                angle_broker = Angel_Broker_Wrapper()
+        if broker == 'angle':
+            angle_broker = Angel_Broker_Wrapper()
+            for share in share_name:
+                print(share)
+                share_token = Util.get_symbol_token(share)
                 for time_interval in time_interval_list:
                     data = angle_broker.get_symbol_data(share_token, time_interval, start_date=start_date, end_date=end_date)
                     if not indicators is None:
