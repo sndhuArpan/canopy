@@ -1,9 +1,5 @@
-from re import search
 from utils.Utils import Utils
 from smartapi import SmartConnect
-from smartapi import WebSocket
-import pandas as pd
-
 
 
 class BrokerAppDetails:
@@ -23,7 +19,6 @@ class BrokerAppDetails:
         if broker == 'ANGEL':
             connect = SmartConnect(api_key= connection_details.get('api_key'))
             connect.generateSession(client_id, connection_details.get('password'))
-            #connect.setSessionExpiryHook(BrokerAppDetails.session_reconnect(client_id))
             BrokerAppDetails.connection_dict[client_id] = connect
 
     @staticmethod
