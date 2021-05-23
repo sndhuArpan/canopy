@@ -1,0 +1,5 @@
+class OrderType:
+    LIMIT = "LIMIT"
+    MARKET = "MARKET"
+    SL_MARKET = "STOPLOSS_MARKET"
+    SL_LIMIT = "STOPLOSS_LIMIT"

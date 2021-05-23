@@ -1,0 +1,6 @@
+class ProductType:
+    DELIVERY = 'DELIVERY'
+    CARRYFORWARD = 'CARRYFORWARD'
+    MARGIN = 'MARGIN'
+    INTRADAY = 'INTRADAY'
+    BO = 'BO'

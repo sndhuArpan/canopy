@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 class AngelSymbol:
     now = datetime.now()
     date_str = now.strftime("%d%m%Y")
-    data_dir = os.path.join(os.path.curdir, 'data')
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
     def __init__(self):
         pass
