@@ -1,4 +1,7 @@
 import enum
+import json
+import calendar
+import uuid
 import numpy as np
 import pandas as pd
 import os
@@ -6,6 +9,9 @@ from datetime import datetime
 import configparser as cfg_parser
 
 class Utils:
+    dateFormat = "%Y-%m-%d"
+    timeFormat = "%H:%M:%S"
+    dateTimeFormat = "%Y-%m-%d %H:%M:%S"
 
     @staticmethod
     def get_config_dict(abs_file_path, mode):
@@ -125,6 +131,87 @@ class Utils:
     def get_no_of_days_between_dates(start, end):
         return np.busday_count(Utils.get_date_from_timestamp(start), Utils.get_date_from_timestamp(end))
 
+    @staticmethod
+    def getMarketStartTime(dateTimeObj=None):
+        return Utils.getTimeOfDay(9, 15, 0, dateTimeObj)
+
+    @staticmethod
+    def getMarketEndTime(dateTimeObj=None):
+        return Utils.getTimeOfDay(15, 30, 0, dateTimeObj)
+
+    @staticmethod
+    def getTimeOfDay(hours, minutes, seconds, dateTimeObj=None):
+        if dateTimeObj == None:
+            dateTimeObj = datetime.now()
+        dateTimeObj = dateTimeObj.replace(hour=hours, minute=minutes, second=seconds, microsecond=0)
+        return dateTimeObj
+
+    @staticmethod
+    def getTimeOfToDay(hours, minutes, seconds):
+        return Utils.getTimeOfDay(hours, minutes, seconds, datetime.now())
+
+    @staticmethod
+    def getTodayDateStr():
+        return Utils.convertToDateStr(datetime.now())
+
+    @staticmethod
+    def isMarketOpen():
+        if Utils.isTodayHoliday():
+            return False
+        now = datetime.now()
+        marketStartTime = Utils.getMarketStartTime()
+        marketEndTime = Utils.getMarketEndTime()
+        return now >= marketStartTime and now <= marketEndTime
+
+    @staticmethod
+    def isMarketClosedForTheDay():
+        # This method returns true if the current time is > marketEndTime
+        # Please note this will not return true if current time is < marketStartTime on a trading day
+        if Utils.isTodayHoliday():
+            return True
+        now = datetime.now()
+        marketEndTime = Utils.getMarketEndTime()
+        return now > marketEndTime
+
+    @staticmethod
+    def isHoliday(datetimeObj):
+        dayOfWeek = calendar.day_name[datetimeObj.weekday()]
+        if dayOfWeek == 'Saturday' or dayOfWeek == 'Sunday':
+            return True
+
+        dateStr = Utils.convertToDateStr(datetimeObj)
+        holidays = Utils.getHolidays()
+        if (dateStr in holidays):
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def isTodayHoliday():
+        return Utils.isHoliday(datetime.now())
+
+    @staticmethod
+    def getHolidays():
+        with open(os.path.abspath("src/config/holidays.json"), 'r') as holidays:
+            holidaysData = json.load(holidays)
+            return holidaysData
+
+    @staticmethod
+    def convertToDateStr(datetimeObj):
+        return datetimeObj.strftime(Utils.dateFormat)
+
+    @staticmethod
+    def getEpoch(datetimeObj=None):
+        # This method converts given datetimeObj to epoch seconds
+        if datetimeObj == None:
+            datetimeObj = datetime.now()
+        epochSeconds = datetime.timestamp(datetimeObj)
+        return int(epochSeconds)  # converting double to long
+
+    @staticmethod
+    def generateTradeID():
+        return str(uuid.uuid4())
+
 class trend_type(enum.Enum):
     STRONG_DOWN = 0
     DOWN = 1
@@ -144,3 +231,6 @@ class interval_enum(enum.Enum):
     ONE_DAY = 375
     ONE_WEEK = 1875
     ONE_MONTH = 7500
+
+class Brokers(enum.Enum):
+    Angel = 1
