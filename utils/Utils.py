@@ -20,6 +20,15 @@ class Utils:
         return dict(config.items(mode))
 
     @staticmethod
+    def get_all_config_section(abs_file_path):
+        sections = []
+        config = cfg_parser.RawConfigParser()
+        config.read(abs_file_path)
+        for section in config.sections():
+            sections.append(section)
+        return sections
+
+    @staticmethod
     def get_symbol_token(name):
         symbol_dataframe = pd.read_csv('symbol.csv')
         symbol = symbol_dataframe[symbol_dataframe['symbol'] == name]
