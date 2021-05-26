@@ -1,5 +1,8 @@
+import csv
 import sqlite3
 import os
+
+from pandas import DataFrame
 
 
 class trade_status_model:
@@ -221,3 +224,24 @@ class canopy_db:
         for row in cursor:
             client_list.append(row[0])
         return client_list
+
+    def create_csv(self, strategy_name, delete=False):
+        select_query = 'select * from ' + strategy_name + '_Daily_Status'
+        cursor = self.conn.execute(select_query)
+        df = DataFrame(cursor.fetchall())
+        columns_list = []
+        for i in cursor.description:
+            columns_list.append(i[0])
+        df.columns = columns_list
+        df = df.loc[df['order_status'] == 'complete']
+        get_file_dir = os.path.dirname(__file__)
+        csv_file_path = os.path.join(get_file_dir, strategy_name+'_trades.csv')
+        if os.path.exists(csv_file_path):
+            df.to_csv(csv_file_path, mode='a', header=False)
+        else:
+            df.to_csv(csv_file_path)
+        if delete:
+            delete_query = 'delete from ' + strategy_name + '_Daily_Status'
+            self.conn.execute(delete_query)
+            self.conn.commit()
+
