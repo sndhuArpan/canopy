@@ -49,6 +49,22 @@ class AngelOrderManager(BaseOrderManager):
             logging.info('%s Order placement failed: %s', self.broker, str(e))
             raise Exception(str(e))
 
+    def cancelOrder(self, orderInputParams):
+        logging.info('%s: Going to place order with params %s', self.broker, orderInputParams)
+        angel_connect = self.brokerHandle
+        try:
+            response = angel_connect.cancelOrder(str(orderInputParams.orderId),orderInputParams.variety).__getitem__('message')
+            if response == 'SUCCESS':
+                logging.info('%s: Order canceled successfully, orderId = %s', self.broker, str(orderInputParams.orderId))
+                return True
+            else:
+                logging.info('%s: Order canceled successfully, orderId = %s', self.broker, str(orderInputParams.orderId))
+                return False
+        except Exception as e:
+            logging.info('%s Order placement failed: %s', self.broker, str(e))
+            raise Exception(str(e))
+
+
     def get_tradeBook(self):
         return self.brokerHandle.tradeBook().__getitem__('data')
 
@@ -62,9 +78,9 @@ class AngelOrderManager(BaseOrderManager):
         return None
 
     def convertToBrokerTransactionType(self, direction):
-        if direction == Direction.LONG:
+        if direction == Direction.BUY:
             return TransactionType.BUY
-        elif direction == Direction.SHORT:
+        elif direction == Direction.SELL:
             return TransactionType.SELL
         return None
 

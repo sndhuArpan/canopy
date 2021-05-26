@@ -1,17 +1,21 @@
+import json
 import logging
+import os
+import uuid
 
 from Data_Wrappers.Indicators.EMA import EMA
 from src.models.Duration import Duration
+from src.models.OrderStatus import OrderStatus
 from src.models.OrderType import OrderType
 from src.models.ProductType import ProductType
 from src.models.Direction import Direction
 from src.models.Exchange import Exchange
-from src.models.Variety import Variety
+from src.models.Segment import Segment
 from src.strategies.BaseStrategy import BaseStrategy
 from src.trademanager.Trade import Trade
 from src.trademanager.TradeManager import TradeManager
 from utils.Utils import Utils, interval_enum
-from datetime import  timedelta, datetime
+from datetime import timedelta, datetime
 import time
 import threading
 
@@ -40,7 +44,7 @@ class SampleStrategy(BaseStrategy):
         self.slPercentage = 1.1
         self.targetPerncetage = 2.2
         self.startTimestamp = Utils.getTimeOfToDay(10, 1, 0)  # When to start the strategy. Default is Market start time
-        self.stopTimestamp = Utils.getTimeOfToDay(13, 30,
+        self.stopTimestamp = Utils.getTimeOfToDay(13, 10,
                                                   0)  # This is not square off timestamp. This is the timestamp after which no new trades will be placed under this strategy but existing trades continue to be active.
         self.squareOffTimestamp = Utils.getTimeOfToDay(15, 0, 0)  # Square off time
         self.capital = 3000  # Capital to trade (This is the margin you allocate from your broker account for this strategy)
@@ -52,6 +56,13 @@ class SampleStrategy(BaseStrategy):
         self.watch_share = {}
         self.symbol_token_dict = {}
         self.placed_trades = []
+        self.client_list = {}
+        tFile = open(os.path.abspath('src/data/client_strategy_map.py'), 'r')
+        client_strategy_data = json.loads(tFile.read())['mapping']
+        for i in client_strategy_data:
+            if self.__class__.__name__ == i['strategy']:
+                for client in i['client']:
+                    self.client_list[client] = uuid.uuid1()
 
     def process(self):
         # for share in self.symbols:
@@ -107,16 +118,14 @@ class SampleStrategy(BaseStrategy):
         #                                    'cmp_high_range': cmp_high_range, 'cmp_low_range': cmp_low_range}
         # print(self.watch_share)
         # self.watch_trades()
-        i = 0
-        while i < 2:
-            i =i+1
-            self.generateTrade('SBIN-EQ',Direction.LONG)
 
+        self.generateTrade('IDEA-EQ', Direction.BUY)
 
     def watch_trades(self):
         ema = EMA(interval=23, on='close')
         ema_name = 'ema_23'
-        day_start = Utils.get_hour_start_date(datetime.today(), interval_enum.FIFTEEN_MINUTE).strftime("%Y-%m-%dT%H:%M:%S+05:30")
+        day_start = Utils.get_hour_start_date(datetime.today(), interval_enum.FIFTEEN_MINUTE).strftime(
+            "%Y-%m-%dT%H:%M:%S+05:30")
         in_trade = False
         while True:
             if not self.watch_share:
@@ -154,20 +163,95 @@ class SampleStrategy(BaseStrategy):
                 break
 
     def get_ltp(self, token):
-        data_dict = self.angel_data.connect.ltpData('NSE', self.symbol_token_dict.get(token), str(token)).__getitem__('data')
+        data_dict = self.angel_data.connect.ltpData('NSE', self.symbol_token_dict.get(token), str(token)).__getitem__(
+            'data')
         return data_dict.__getitem__('ltp')
 
     def generateTrade(self, tradingSymbol, direction):
-        trade = Trade(tradingSymbol=tradingSymbol)
-        trade.strategy = self.__class__.__name__
-        trade.isFutures = True
-        trade.create_trade_orderType_market(direction, 1, Duration.DAY, self.productType)
-        # Hand over the trade to TradeManager
-        t = threading.Thread(target=TradeManager.addNewTrade, args=(trade,), daemon=True)
-        t.start()
-        print('trade placed')
-        self.placed_trades.append(trade.tradeID)
-        t.join()
+        buy_system_trade_id = ''
+        sl_1_trade_id = '51fa98fa-0697-454e-a55d-0bd960f620fb'
+        sl_2_trade_id = '89a283c1-acdf-453a-ab80-952e1de353d2'
+        for client_key in self.client_list:
+            trade = Trade(tradingSymbol=tradingSymbol, clientId=client_key, strategy_trade_id=self.client_list.get(client_key))
+            trade.strategy = self.__class__.__name__
+            trade.instrument_type = Segment.EQUITY
+            stoploss = 8.45
+            trade.create_trade_orderType_market(direction, 2, Duration.DAY, self.productType, stoploss)
+            # Hand over the trade to TradeManager
+            buy_system_trade_id = trade.system_tradeID
+            t = threading.Thread(target=TradeManager.addNewTrade, args=(trade,), daemon=True)
+            t.start()
+            print('trade placed')
+            self.placed_trades.append(trade.system_tradeID)
+
+        while True:
+            trade_model = TradeManager.get_trade(self.__class__.__name__,buy_system_trade_id)
+            if not trade_model:
+                continue
+            if trade_model.order_status == OrderStatus.COMPLETE:
+                for client_key in self.client_list:
+                    trade = Trade(tradingSymbol=tradingSymbol, clientId=client_key,
+                                  strategy_trade_id=self.client_list.get(client_key))
+                    trade.strategy = self.__class__.__name__
+                    trade.instrument_type = Segment.EQUITY
+                    sl_1_trade_id = trade.system_tradeID
+                    trade.create_trade_orderType_stoploss(Direction.SELL, 1,8.50,8.45, Duration.DAY, self.productType)
+                    # Hand over the trade to TradeManager
+                    t = threading.Thread(target=TradeManager.addNewTrade, args=(trade,), daemon=True)
+                    t.start()
+
+                    trade = Trade(tradingSymbol=tradingSymbol, clientId=client_key,
+                                  strategy_trade_id=self.client_list.get(client_key))
+                    trade.strategy = self.__class__.__name__
+                    trade.instrument_type = Segment.EQUITY
+                    sl_2_trade_id = trade.system_tradeID
+                    trade.create_trade_orderType_stoploss_market(Direction.SELL, 1, 8.2, Duration.DAY, self.productType)
+                    # Hand over the trade to TradeManager
+                    t = threading.Thread(target=TradeManager.addNewTrade, args=(trade,), daemon=True)
+                    t.start()
+                break
+
+        now = datetime.now()
+        if now < self.stopTimestamp:
+            waitSeconds = Utils.getEpoch(self.stopTimestamp) - Utils.getEpoch(now)
+            logging.info("%s: Waiting for %d seconds till startegy start timestamp reaches...", self.getName(),
+                         waitSeconds)
+            if waitSeconds > 0:
+                time.sleep(waitSeconds)
+
+        trade_model_sl_1 = TradeManager.get_trade(self.__class__.__name__, sl_1_trade_id)
+        trade_model_sl_2 = TradeManager.get_trade(self.__class__.__name__, sl_2_trade_id)
+        sell_call = False
+        qty = 0
+        if trade_model_sl_1.order_status != OrderStatus.COMPLETE:
+            sell_call = True
+            qty = qty +1
+            TradeManager.executeCancelTrade(trade_model_sl_1)
+        if trade_model_sl_2.order_status not in (OrderStatus.COMPLETE):
+            sell_call = True
+            qty = qty +1
+            TradeManager.executeCancelTrade(trade_model_sl_2)
+        sell_trade_id = ''
+        if sell_call:
+            for client_key in self.client_list:
+                trade = Trade(tradingSymbol=tradingSymbol, clientId=client_key,
+                              strategy_trade_id=self.client_list.get(client_key))
+                trade.strategy = self.__class__.__name__
+                trade.instrument_type = Segment.EQUITY
+                stoploss = 8.45
+                trade.create_trade_orderType_market(Direction.SELL, 1, Duration.DAY, self.productType, stoploss)
+                # Hand over the trade to TradeManager
+                sell_trade_id = trade.system_tradeID
+                t = threading.Thread(target=TradeManager.addNewTrade, args=(trade,), daemon=True)
+                t.start()
+
+        while True:
+            trade_model = TradeManager.get_trade(self.__class__.__name__, sell_trade_id)
+            if not trade_model:
+                continue
+            if trade_model.order_status == OrderStatus.COMPLETE:
+                break
+
 
     def shouldPlaceTrade(self, trade, tick):
         # First call base class implementation and if it returns True then only proceed

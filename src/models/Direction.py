@@ -1,3 +1,3 @@
 class Direction:
-    LONG = "LONG"
-    SHORT = "SHORT"
+    BUY = "BUY"
+    SELL = "SELL"

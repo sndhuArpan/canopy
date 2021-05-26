@@ -7,6 +7,7 @@ from src.ticker.AngelSymbol.AngelSymbol import AngelSymbol
 
 
 # from Test import Test
+from src.trademanager.TradeManager import TradeManager
 
 
 class Algo:
@@ -28,8 +29,10 @@ class Algo:
         time.sleep(2)
 
         # start running strategies: Run each strategy in a separate thread
-        threading.Thread(target=SampleStrategy.getInstance().run).start()
+        # threading.Thread(target=SampleStrategy.getInstance().run).start()
         # threading.Thread(target=BNFORB30Min.getInstance().run).start()
+
+        threading.Thread(target=TradeManager.update_trade_status).start()
 
         Algo.isAlgoRunning = True
         logging.info("Algo started.")

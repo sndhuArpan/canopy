@@ -3,9 +3,28 @@ from src.models.ProductType import ProductType
 
 
 class OrderInputParams:
-    def __init__(self, tradingSymbol, symbolToken,trade):
+    def __init__(self, tradingSymbol=None, symbolToken=None, trade=None):
         self.exchange = "NSE"  # default
+        if trade is None:
+            self.variety = ''  # variety
+            self.orderId = ''
+            self.direction = ''
+            self.productType = ''  # Product type (CNC,MIS)t
+            self.tradingSymbol = ''  # Trading Symbol of the instrument
+            self.symbolToken = ''  # Symbol Token is unique identifier
+            self.duration = ''  # Order duration (DAY,IOC)
+            self.orderType = ''  # Order type (MARKET, LIMIT etc.)
+            self.qty = ''
+            self.price = ''  # The min or max price to execute the order at (for LIMIT orders)
+            self.triggerPrice = ''  # The price at which an order should be triggered (SL, SL-M)
+            self.squareoff = ''  # Only For ROBO (Bracket Order)
+            self.stoploss = ''  # Only For ROBO (Bracket Order)
+            self.trailingStopLoss = ''  # Only For ROBO (Bracket Order)
+            self.disclosedquantity = ''  # Quantity to disclose publicly (for equity trades)
+            self.ordertag = ''
+            return
         self.variety = trade.variety  # variety
+        self.orderId = ''
         self.direction = trade.direction
         self.productType = trade.productType  # Product type (CNC,MIS)t
         self.tradingSymbol = tradingSymbol # Trading Symbol of the instrument
@@ -19,7 +38,7 @@ class OrderInputParams:
         self.stoploss = trade.stopLoss  # Only For ROBO (Bracket Order)
         self.trailingStopLoss = ''# Only For ROBO (Bracket Order)
         self.disclosedquantity = '' # Quantity to disclose publicly (for equity trades)
-        self.ordertag = trade.tradeID  #It is optional to apply to an order to identify.
+        self.ordertag = trade.system_tradeID  #It is optional to apply to an order to identify.
 
     def __str__(self):
         return "symbol=" + str(self.tradingSymbol) + ", symbolToken=" + str(

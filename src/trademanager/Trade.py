@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from src.models.OrderType import OrderType
 from src.models.ProductType import ProductType
@@ -9,20 +10,19 @@ from utils.Utils import Utils
 
 
 class Trade:
-    def __init__(self, tradingSymbol=None):
+    def __init__(self, tradingSymbol=None,clientId=None,strategy_trade_id=None):
         self.exchange = "NSE"
-        self.tradeID = ''  # Unique ID for each trade
+        self.system_tradeID = uuid.uuid4()  # Unique ID for each trade
+        self.strategy_trade_id = strategy_trade_id
         self.tradingSymbol = tradingSymbol
-        self.clientId = ''
+        self.clientId = clientId
         self.strategy = ""
         self.direction = ""
         self.duration = ""
         self.variety = ''
         self.orderType = ''
         self.productType = ProductType.MIS
-        self.isFutures = False  # Futures trade
-        self.isOptions = False  # Options trade
-        self.optionType = None  # CE/PE. Applicable only if isOptions is True
+        self.instrument_type = ''
         self.intradaySquareOffTimestamp = None  # Can be strategy specific. Some can square off at 15:00:00 some can at 15:15:00 etc.
         self.requestedEntry = 0  # Requested entry
         self.entry = 0  # Actual entry. This will be different from requestedEntry if the order placed is Market order
@@ -51,7 +51,7 @@ class Trade:
     def equals(self, trade):  # compares to trade objects and returns True if equals
         if trade == None:
             return False
-        if self.tradeID == trade.tradeID:
+        if self.system_tradeID == trade.system_tradeID:
             return True
         if self.tradingSymbol != trade.tradingSymbol:
             return False
@@ -69,18 +69,20 @@ class Trade:
             return False
         return True
 
-    def create_trade_orderType_market(self, direction, quantity, duration, productType):
+    def create_trade_orderType_market(self, direction, quantity, duration, productType, stoploss):
         self.orderType = OrderType.MARKET
         self.direction = direction
         self.qty = quantity
+        self.stopLoss = stoploss
         self.duration = duration
         self.productType = productType
         self.variety = Variety.NORMAL
 
-    def create_trade_orderType_limit(self, direction, quantity, entry_price, duration, productType):
+    def create_trade_orderType_limit(self, direction, quantity, entry_price, duration, productType, stoploss):
         self.orderType = OrderType.LIMIT
         self.direction = direction
         self.qty = quantity
+        self.stopLoss = stoploss
         self.duration = duration
         self.productType = productType
         self.requestedEntry = entry_price
@@ -106,7 +108,7 @@ class Trade:
         self.variety = Variety.STOPLOSS
 
     def __str__(self):
-        return "ID=" + str(self.tradeID) + ", state=" + self.tradeState + ", symbol=" + self.tradingSymbol \
+        return "ID=" + str(self.system_tradeID) + ", state=" + self.tradeState + ", symbol=" + self.tradingSymbol \
                + ", strategy=" + self.strategy + ", direction=" + self.direction \
                + ", productType=" + self.productType + ", reqEntry=" + str(self.requestedEntry) \
                + ", stopLoss=" + str(self.stopLoss) + ", target=" + str(self.target) \

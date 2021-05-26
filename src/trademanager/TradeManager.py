@@ -1,89 +1,92 @@
-import copy
-import json
 import logging
-import os
 import threading
-import uuid
+import time
 
 from Data_Wrappers.Angel_Broker.Angel_Broker_Wrapper import Angel_Broker_Wrapper
+from src.DB.canopy.canopy_db import canopy_db, trade_status_model
 from src.OrderManager.AngelOrderManager import AngelOrderManager
 from src.OrderManager.OrderInputParams import OrderInputParams
-from src.models.TradeState import TradeState
+from src.models.OrderStatus import OrderStatus
+from src.models.OrderType import OrderType
+from src.models.Variety import Variety
 
 
 class TradeManager:
-    trades = {}  # to store all the trades
-    client_stregies_map = {}
 
     @staticmethod
     def addNewTrade(trade):
-        if trade == None:
+        if trade==None:
             return
         logging.info('TradeManager: addNewTrade called for %s', trade)
-        # for tr in TradeManager.trades:
-        #     if tr.equals(trade):
-        #         logging.warn('TradeManager: Trade already exists so not adding again. %s', trade)
-        #         return
-        # Add the new trade to the list
-        client_list = TradeManager.client_stregies_map.get(trade.strategy)
-        if not client_list:
-            tFile = open(os.path.abspath('src/data/client_strategy_map.py'), 'r')
-            client_strategy_data = json.loads(tFile.read())['mapping']
-            client_list = []
-            for i in client_strategy_data:
-                if trade.strategy == i['strategy']:
-                    client_list = i['client']
-                    TradeManager.client_stregies_map[trade.strategy] = client_list
-        for client in client_list:
-            trade_obj = copy.deepcopy(trade)
-            trade_obj.tradeID = uuid.uuid4()
-            trade_obj.clientId = client
-            client_trades = TradeManager.trades.get(client)
-            if client_trades:
-                client_trades[trade_obj.tradeID] = trade_obj
-                TradeManager.trades[client] = client_trades
-            else:
-                TradeManager.trades[client] = {trade_obj.tradeID : trade_obj}
-            logging.info('TradeManager: trade %s added successfully to the list', trade_obj.tradeID)
-            t = threading.Thread(target=TradeManager.executeTrade, args=(trade_obj,), daemon=True)
-            t.start()
-            t.join()
+        sql = canopy_db()
+        model = trade_status_model(trade.strategy)
+        model.initialize_values(client_id=trade.clientId, strategy_trade_id=trade.strategy_trade_id, system_trade_id=trade.system_tradeID,
+                                order_type=trade.orderType,
+                                order_status=OrderStatus.OPEN_PENDING,
+                                transaction_type=trade.direction,
+                                share_name=trade.tradingSymbol,
+                                qty=trade.qty,
+                                stoploss=trade.stopLoss,
+                                price=trade.requestedEntry,
+                                instrument_type=trade.instrument_type)
+        sql.insert_strategy_daily(model)
+        logging.info('TradeManager: trade %s added successfully to the list', trade.system_tradeID)
+        t = threading.Thread(target=TradeManager.executeTrade, args=(trade,), daemon=True)
+        t.start()
+        t.join()
 
     @staticmethod
     def executeTrade(trade):
         logging.info('TradeManager: Execute trade called for %s', trade)
         # Create order input params object and place order
-        oip = OrderInputParams(trade.tradingSymbol,'3045', trade)
+        print('in excute trade')
+        oip = OrderInputParams(trade.tradingSymbol, '14366', trade)
+        sql = canopy_db()
+        model = sql.select_daily_entry_system_trade_id(trade.system_tradeID, trade.strategy)
         try:
             order = TradeManager.getOrderManager().placeOrder(oip)
-            if order.orderId:
-                trade.tradeState = TradeState.PLACED
-            trade.entryOrder = order
-            client_trades = TradeManager.trades[trade.clientId]
-            client_trades[trade.tradeID] = trade
+            model.order_id = order.orderId
+            model.order_status = OrderStatus.CREATED
+            print('in excute trade placed')
+            sql.update_daily_entry(model)
+            logging.info('TradeManager: Execute trade successful for %s and orderId %s', trade.system_tradeID,
+                         order.orderId)
         except Exception as e:
-            logging.error('TradeManager: Execute trade failed for tradeID %s: Error => %s', trade.tradeID, str(e))
-            trade.tradeState = TradeState.PLACEDERROR
-            TradeManager.trades[trade.clientId][trade.tradeID] = trade
-            client_list = TradeManager.client_stregies_map.get(trade.strategy)
-            client_list.remove(trade.clientId)
-            TradeManager.client_stregies_map[trade.strategy] = client_list
-            tFile = open(os.path.abspath('src/data/client_strategy_map.py'), 'r')
-            client_strategy_data = json.loads(tFile.read())
-            for i in client_strategy_data['mapping']:
-                if trade.strategy == i['strategy']:
-                    i['client'] = client_list
-                    break
-            json_object = json.dumps(client_strategy_data, indent=4)
-            # Writing to sample.json
-            with open(os.path.abspath('src/data/client_strategy_map.py'), "w") as outfile:
-                outfile.write(json_object)
+            print('in excute trade failed')
+            logging.error('TradeManager: Execute trade failed for tradeID %s: Error => %s', trade.system_tradeID,
+                          str(e))
+            model.order_status = OrderStatus.REJECTED
+            sql.update_daily_entry_status(model)
 
-        logging.info('TradeManager: Execute trade successful for %s and entryOrder %s', trade, trade.entryOrder)
+    @staticmethod
+    def executeCancelTrade(model):
+        logging.info('TradeManager: Cancel trade called for %s', model.order_id)
+        # Create order input params object and place order
+        variety = ''
+        if model.order_type in (OrderType.LIMIT,OrderType.MARKET):
+            variety = Variety.NORMAL
+        else:
+            variety = Variety.STOPLOSS
+        try:
+            sql = canopy_db()
+            oip = OrderInputParams()
+            oip.variety = variety
+            oip.orderId = model.order_id
+            status = TradeManager.getOrderManager().cancelOrder(oip)
+            if status:
+                model.order_status = OrderStatus.CANCELLED
+            else:
+                model.order_status = OrderStatus.FAILED
+            sql.update_daily_entry_status(model)
+        except Exception as e:
+            logging.error('TradeManager: Cancel trade failed for tradeID %s: Error => %s', model.system_trade_id,
+                          str(e))
+            model.order_status = OrderStatus.FAILED
+            sql.update_daily_entry_status(model)
 
     @staticmethod
     def getOrderManager():
-        orderManager = AngelOrderManager('Angel','S705342')
+        orderManager = AngelOrderManager('Angel', 'S705342')
         return orderManager
 
     @staticmethod
@@ -92,21 +95,32 @@ class TradeManager:
         return angel.connect
 
     @staticmethod
-    def get_placed_trade_status():
-        clients = TradeManager.trades.keys()
-        for client in clients:
-            orders = TradeManager.trades.get(client)
-            order_book = TradeManager.getClientConnect(client).orderBook().__getitem__('data')
-            for order in reversed(order_book):
-                ordertag = order['ordertag']
-                trade = orders.get(ordertag)
-                if trade:
-                    trade.tradeState = order['orderstatus']
-                    trade.filledQty = order['filledshares']
-                    trade.startTimestamp = order['filltime']
+    def update_trade_status():
+        while True:
+            sql = canopy_db()
+            strategy_name = 'SampleStrategy'
+            order_status_list = '"created", "open"'
+            client_list = sql.select_distinct_client_id(strategy_name)
+            for client in client_list:
+                order_book_dict = {}
+                orders_list = sql.select_daily_entry_client_id_order_status(client, strategy_name, order_status_list)
+                connect = TradeManager.getClientConnect(client)
+                order_data = connect.orderBook().__getitem__('data')
+                if order_data:
+                    for data in order_data:
+                        order_book_dict[data['orderid']] = data
 
+                    for order in orders_list:
+                        order_info = order_book_dict.get(order.order_id)
+                        order.order_status = order_info['orderstatus']
+                        order.price = order_info['averageprice']
+                        order.fill_qty = order_info['filledshares']
+                        order.fill_time = order_info['updatetime']
+                        sql = canopy_db()
+                        sql.update_daily_entry_filled(order)
+            time.sleep(120)
 
-
-
-
-
+    @staticmethod
+    def get_trade(strategy, system_tradeID):
+        sql = canopy_db()
+        return sql.select_daily_entry_system_trade_id(system_tradeID, strategy)
