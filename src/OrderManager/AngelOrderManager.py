@@ -1,18 +1,16 @@
 import logging
 from src.OrderManager.BaseOrderManager import BaseOrderManager
-from src.OrderManager.Order import Order
 from src.models.Angel.TransactionType import TransactionType
 from src.models.Direction import Direction
 from src.models.OrderType import OrderType
 from src.models.Angel.OrderType import OrderType as angel_order_type
 from src.models.ProductType import ProductType
 from src.models.Angel.ProductType import ProductType as angel_product_type
-from utils.Utils import Utils
 
 
 class AngelOrderManager(BaseOrderManager):
-    def __init__(self,broker,clientId):
-        super().__init__(broker,clientId)
+    def __init__(self, broker, clientId):
+        super().__init__(broker, clientId)
 
     def placeOrder(self, orderInputParams):
         logging.info('%s: Going to place order with params %s', self.broker, orderInputParams)
@@ -40,11 +38,7 @@ class AngelOrderManager(BaseOrderManager):
             orderId = angel_connect.placeOrder(orderParam)
 
             logging.info('%s: Order placed successfully, orderId = %s', self.broker, orderId)
-            order = Order(orderInputParams)
-            order.orderId = orderId
-            order.orderPlaceTimestamp = Utils.getEpoch()
-            order.lastOrderUpdateTimestamp = Utils.getEpoch()
-            return order
+            return orderId
         except Exception as e:
             logging.info('%s Order placement failed: %s', self.broker, str(e))
             raise Exception(str(e))
@@ -53,17 +47,19 @@ class AngelOrderManager(BaseOrderManager):
         logging.info('%s: Going to place order with params %s', self.broker, orderInputParams)
         angel_connect = self.brokerHandle
         try:
-            response = angel_connect.cancelOrder(str(orderInputParams.orderId),orderInputParams.variety).__getitem__('message')
+            response = angel_connect.cancelOrder(str(orderInputParams.orderId), orderInputParams.variety).__getitem__(
+                'message')
             if response == 'SUCCESS':
-                logging.info('%s: Order canceled successfully, orderId = %s', self.broker, str(orderInputParams.orderId))
+                logging.info('%s: Order canceled successfully, orderId = %s', self.broker,
+                             str(orderInputParams.orderId))
                 return True
             else:
-                logging.info('%s: Order canceled successfully, orderId = %s', self.broker, str(orderInputParams.orderId))
+                logging.info('%s: Order canceled successfully, orderId = %s', self.broker,
+                             str(orderInputParams.orderId))
                 return False
         except Exception as e:
             logging.info('%s Order placement failed: %s', self.broker, str(e))
             raise Exception(str(e))
-
 
     def get_tradeBook(self):
         return self.brokerHandle.tradeBook().__getitem__('data')

@@ -44,13 +44,13 @@ class TradeManager:
         sql = canopy_db()
         model = sql.select_daily_entry_system_trade_id(trade.system_tradeID, trade.strategy)
         try:
-            order = TradeManager.getOrderManager().placeOrder(oip)
-            model.order_id = order.orderId
+            orderid = TradeManager.getOrderManager().placeOrder(oip)
+            model.order_id = orderid
             model.order_status = OrderStatus.CREATED
             print('in excute trade placed')
             sql.update_daily_entry(model)
             logging.info('TradeManager: Execute trade successful for %s and orderId %s', trade.system_tradeID,
-                         order.orderId)
+                         orderid)
         except Exception as e:
             print('in excute trade failed')
             logging.error('TradeManager: Execute trade failed for tradeID %s: Error => %s', trade.system_tradeID,
