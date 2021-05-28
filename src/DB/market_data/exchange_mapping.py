@@ -1,6 +1,5 @@
 import enum
 
-
 class exchange_mapping(enum.Enum):
     NSE = 'nse_cm'
     BSE = 'bse_cm'

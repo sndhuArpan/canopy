@@ -91,37 +91,29 @@ class AngelSymbol:
 
     @staticmethod
     def get_symbol_token(exchange, name):
-        print('Func :get_symbol_token : In')
-        print('Func :get_symbol_token : For exchange %s and name %s' % (exchange, name))
         file_name = exchange + AngelSymbol.date_str + '.csv'
         file_abs_name = os.path.join(AngelSymbol.data_dir, file_name)
         symbol_dataframe = pd.read_csv(file_abs_name)
         symbol = symbol_dataframe[symbol_dataframe['symbol'] == name]
         if symbol.empty:
-            print('Func :get_symbol_token : No Symbol found')
             return None
         else:
-            print('Func :get_symbol_token : Return token, exit')
             return symbol['token'].iloc[0]
 
     @staticmethod
-    def get_share_name(exchange, token):
-        print('Func :get_share_name : In')
-        print('Func :get_share_name : For exchange %s and token %s' % (exchange, token))
+    def get_symbol(exchange, token):
         file_name = exchange + AngelSymbol.date_str + '.csv'
         file_abs_name = os.path.join(AngelSymbol.data_dir, file_name)
         symbol_dataframe = pd.read_csv(file_abs_name)
-        symbol = symbol_dataframe[symbol_dataframe['token'] == token]
+        symbol = symbol_dataframe[symbol_dataframe['token'] == int(token)]
         if symbol.empty:
-            print('Func :get_share_name : No share name found')
             return None
         else:
-            print('Func :get_share_name : Return share name, exit')
-            return symbol['name'].iloc[0]
+            return symbol['symbol'].iloc[0]
 
 
 
 if __name__ == '__main__':
     AngelSymbol.create_csv_by_segment()
-    print(AngelSymbol.get_symbol_token('NSE', 'MARUTI-EQ'))
-    print(AngelSymbol.get_share_name('NSE', 10999))
+    # print(AngelSymbol.get_symbol_token('NSE', 'MARUTI-EQ'))
+    # print(AngelSymbol.get_share_name('NSE', 10999))

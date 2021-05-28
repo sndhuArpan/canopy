@@ -1,36 +1,66 @@
-## WebSocket
-from smartapi import WebSocket
-from smartapi import SmartConnect
+from src.ticker.AngelTicker import AngelTicker
+from Logging.Logger import GetLogger
+import time
+import threading
 
 
-obj = SmartConnect(api_key="QT0dWWIa")
-obj.generateSession("S705342","poiuhbnm@2")
-feedToken = obj.getfeedToken()
-token = "mcx_fo|229650"  # "nse_cm|2885&nse_cm|1594&nse_cm|11536"
-task = "mw"
-def on_tick(ws, tick):
-    print("Ticks: {}".format(tick))
+
+logger = GetLogger().get_logger()
+
+count = 0
+while True:
+    count = count + 1
+    obj = AngelTicker('S705342', logger)
+    obj.startTicker()
+    if obj.ticker.is_connected():
+        print('Connected %d' % count)
+    del obj
+    time.sleep(5)
+
+def send_signal():
+    time.sleep(50)
+    obj.ticker.websocket_connection()
+#print(obj.ticker._is_first_connect)
+t = threading.Thread(target=obj.monitor_and_fallback, daemon= True)
+t.start()
+t1 = threading.Thread(target= send_signal)
+#t1.start()
+while True:
+    time.sleep(5)
+    print(obj.connect_status_df)
+    print(obj.data_df)
+# obj.ticker.close()
+# while obj.ticker.is_connected():
+#     time.sleep(1)
+#     print('still connected')
+# obj.ticker._is_first_connect = True
+# obj.startTicker()
+# print(obj.feedToken)
+# while not obj.ticker.is_connected():
+#     time.sleep(1)
+#     print('still not connected')
+# while True:
+#     time.sleep(5)
+#     print(obj.data_df)
+#     print(obj.connect_status_df)
+# print(obj.ticker._is_first_connect)
+# #print(obj.data_df)
+# #obj.ticker.heartbeat()
+# while True:
+#     time.sleep(5)
+# #t = threading.Thread(target=obj.monitor_and_fallback, daemon= True)
+# #t.start()
+# print('Next line')
+#obj.unregisterSymbols('mcx_fo',228745)
+# time.sleep(10)
+# print(obj.ticker.is_connected())
+# obj.connect.terminateSession('S705342')
+# time.sleep(10)
+# obj.startTicker()
+# print(obj.ticker.is_connected())
+# while True:
+#     time.sleep(5)
+#     print(obj.data_df)
+# t.join()
 
 
-def on_connect(ws, response):
-    ws.websocket_connection()  # Websocket connection
-    ws.send_request(token, task)
-
-
-def on_close(ws, code, reason):
-    ws.stop()
-
-
-# Assign the callbacks.
-
-
-if __name__ == '__main__':
-    CLIENT_CODE = "S705342"
-    ss = WebSocket(feedToken, CLIENT_CODE)
-
-    ss.on_ticks = on_tick
-    ss.on_connect = on_connect
-    ss.on_close = on_close
-
-    ss.connect()
-    print('done')

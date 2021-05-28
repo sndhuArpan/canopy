@@ -3,7 +3,8 @@ class TickData:
         self.tradingSymbol = tradingSymbol
         self.lastTradedPrice = 0
         self.lastTradedQuantity = 0
-        self.avgTradedPrice = 0
+        #self.avgTradedPrice = 0
+        self.lastTradedTime = None
         self.volume = 0
         self.totalBuyQuantity = 0
         self.totalSellQuantity = 0

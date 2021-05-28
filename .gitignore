@@ -3,4 +3,7 @@
 performance_matrix/lib/matrix_charts/TempPlotFiles/*
 performance_matrix/performance_reports/temp/*
 *.cpython-39.pyc
-*.DS_Store
+.DS_Store
+broker_detail.cfg
+src/ticker/AngelSymbol/data/*
+src/Log/*

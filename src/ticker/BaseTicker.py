@@ -3,8 +3,8 @@ from src.models.BrokerAppDetails import BrokerAppDetails
 
 class BaseTicker:
 
-  def __init__(self, login_nickname, logger):
-    self.broker_detail_obj = BrokerAppDetails(login_nickname)
+  def __init__(self, client_id, logger):
+    self.broker_detail_obj = BrokerAppDetails.get_connection_details(client_id)
     self.logger = logger
     self.ticker = None
     self.tickListeners = []
@@ -19,10 +19,10 @@ class BaseTicker:
     # All registered tick listeners will be notified on new ticks
     self.tickListeners.append(listener)
 
-  def registerSymbols(self, symbols):
+  def registerSymbols(self, exchange, token):
     pass
 
-  def unregisterSymbols(self, symbols):
+  def unregisterSymbols(self, exchange, token):
     pass
 
   def onNewTicks(self, ticks):
