@@ -5,3 +5,6 @@ autobahn
 service-identity
 websockets
 cryptography
+telegram
+telebot
+telethon
