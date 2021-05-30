@@ -5,11 +5,9 @@ from smartapi import WebSocket
 from time import sleep
 from datetime import datetime, timedelta
 #from src.ticker.BaseTicker import BaseTicker
-from src.models.BrokerAppDetails import BrokerAppDetails
+from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 from src.ticker.AngelSymbol.AngelSymbol import AngelSymbol
 import pandas as pd
-import threading
-import multiprocessing
 
 
 class AngelTicker():

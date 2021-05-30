@@ -7,3 +7,4 @@ performance_matrix/performance_reports/temp/*
 broker_detail.cfg
 src/ticker/AngelSymbol/data/*
 src/Log/*
+EncryptionKey.txt

@@ -1,4 +1,4 @@
-from src.models.BrokerAppDetails import BrokerAppDetails
+from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 
 
 class BaseTicker:

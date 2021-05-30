@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from src.DB.market_data.Market_Data import MarketData, LtpPriceModel
 from src.DB.static_db.TickerDetails import TickerDetails
 from Logging.Logger import GetLogger
-from src.models.BrokerAppDetails import BrokerAppDetails
+from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 
 
 class MarketDataWebSocketFallback:
@@ -34,7 +34,7 @@ class MarketDataWebSocketFallback:
         MarketData().update_ltp(model)
 
     def get_ltp_price_fallback(self, set_none=False):
-        connection = BrokerAppDetails.get_normal_connection('S705342')
+        connection = BrokerAppDetails().get_normal_connection('S705342')
         register_token = MarketData().get_all_register_token()
         token_details = []
         for item in register_token:
@@ -84,12 +84,13 @@ class MarketDataWebSocketFallback:
 
 if __name__ == '__main__':
     fallback_obj = MarketDataWebSocketFallback()
-    time.sleep(60)
-    t = threading.Thread(target=fallback_obj.print_monitoring, daemon=True)
-    t.start()
-    while True:
-        fallback_obj.monitor_and_fallback()
-    #fallback_obj.update_ltp_in_market_date(228530, 'MCX', None, None)
+    fallback_obj.get_ltp_price_fallback()
+    # time.sleep(60)
+    # t = threading.Thread(target=fallback_obj.print_monitoring, daemon=True)
+    # t.start()
+    # while True:
+    #     fallback_obj.monitor_and_fallback()
+    # #fallback_obj.update_ltp_in_market_date(228530, 'MCX', None, None)
 
 
 

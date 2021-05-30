@@ -63,19 +63,16 @@ class MarketData:
                                                          exchange=model.exchange)
         self.conn.execute(query)
         self.conn.commit()
-        self.conn.close()
 
     def deregister_token(self, token):
         query = 'delete from market_data where token = {token}'.format(token=token)
         self.conn.execute(query)
         self.conn.commit()
-        self.conn.close()
 
     def deregister_all_token(self):
         query = 'delete from market_data'
         self.conn.execute(query)
         self.conn.commit()
-        self.conn.close()
 
     def update_ltp(self, model):
         update_query = 'Update market_data set'

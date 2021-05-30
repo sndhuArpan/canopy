@@ -1,7 +1,7 @@
 from smartapi import WebSocket
 from smartapi import SmartConnect
-from src.DB.market_data.Market_Data import LtpPriceModel, MarketData , TickerMsg
-from src.models.BrokerAppDetails import BrokerAppDetails
+from src.DB.market_data.Market_Data import TickerMsg
+from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 
 
 class MarketDataWebsocket:
@@ -9,16 +9,15 @@ class MarketDataWebsocket:
     def __init__(self, client_id, logger):
         self.logger = logger
         self.client_id = client_id
-        self.client_id = client_id
-        self.connection_detail = BrokerAppDetails.get_connection_details(self.client_id)
+        self.connection_detail = BrokerAppDetails().get_brokerclientdetails(client_id)
         self.token = None
         self.task = "mw"
 
     def start_ticker(self):
         self.market_data_db_obj = MarketData()
         self.token = self.market_data_db_obj.get_register_token_string()
-        self.connect = SmartConnect(api_key=self.connection_detail.get('web_socket_api_key'))
-        self.connect.generateSession(self.client_id, self.connection_detail.get('password'))
+        self.connect = SmartConnect(api_key=self.connection_detail.websocket_api_key)
+        self.connect.generateSession(self.client_id, self.connection_detail.password)
         self.feed_token = self.connect.getfeedToken()
         self.ss = WebSocket(self.feed_token, self.client_id)
         self.ss.on_ticks = self.on_tick
