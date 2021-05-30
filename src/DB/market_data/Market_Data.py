@@ -42,7 +42,6 @@ class MarketData:
                          status        varchar2(10));'''
         self.conn.execute(create_table)
         self.conn.commit()
-        self.conn.close()
 
     def create_market_data_table(self):
         create_table = 'Create table market_data ' + '''(token int NOT NULL PRIMARY KEY,
@@ -52,7 +51,6 @@ class MarketData:
                  exchange        varchar(10) NOT NULL);'''
         self.conn.execute(create_table)
         self.conn.commit()
-        self.conn.close()
 
     def __insert_table_daily_query(self):
         insert_query = 'INSERT INTO market_data (token, exchange) values({token}, "{exchange}")'

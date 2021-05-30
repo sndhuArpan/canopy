@@ -29,22 +29,48 @@ class TickerDetails:
         db_file = os.path.join(get_file_dir, 'static_db.db')
         self.conn = sqlite3.connect(db_file)
 
+    def create_table_ticker_details_load_date(self):
+        create_table = '''create table ticker_details_load_date(load_date varchar2(10))'''
+        self.conn.execute(create_table)
+        self.conn.commit()
+
+    def _get_latest_ticker_details_load_date(self):
+        select_query = '''select * from ticker_details_load_date'''
+        cursor = self.conn.execute(select_query)
+        for row in cursor:
+            if row:
+                return row[0]
+
+    def _update_insert_ticker_details_load_date(self):
+        empty_table = '''delete from ticker_details_load_date'''
+        self.conn.execute(empty_table)
+        self.conn.commit()
+        insert_latest_date = '''insert into ticker_details_load_date(load_date) values ("{latest_date}")'''
+        latest_date = datetime.now().strftime('%d%m%Y')
+        self.conn.execute(insert_latest_date.format(latest_date= latest_date))
+        self.conn.commit()
+
     def drop_angel_symbol_token_mapping_tables(self, exchange):
         drop_table = 'drop table if exists symbol_token_{exchange}_map'
         self.conn.execute(drop_table.format(exchange=exchange))
         self.conn.commit()
 
     def load_data_into_symbol_token_map(self):
-        url = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
-        r = requests.get(url)
-        dataframe = pd.DataFrame(r.json())
-        splits = list(dataframe.groupby("exch_seg"))
-        for i in splits:
-            exch_seg = i[0]
-            self.drop_angel_symbol_token_mapping_tables(exch_seg)
-            table_name = 'symbol_token_{exchange}_map'.format(exchange=exch_seg.lower())
-            i[1].to_sql(table_name, self.conn, if_exists='replace', index=False)
-        self.conn.commit()
+        latest_load_date = self._get_latest_ticker_details_load_date()
+        if latest_load_date is None or datetime.strptime(latest_load_date, '%d%m%Y').date() < datetime.now().date():
+            url = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
+            r = requests.get(url)
+            dataframe = pd.DataFrame(r.json())
+            splits = list(dataframe.groupby("exch_seg"))
+            for i in splits:
+                exch_seg = i[0]
+                self.drop_angel_symbol_token_mapping_tables(exch_seg)
+                table_name = 'symbol_token_{exchange}_map'.format(exchange=exch_seg.lower())
+                i[1].to_sql(table_name, self.conn, if_exists='replace', index=False)
+            self.conn.commit()
+            self._update_insert_ticker_details_load_date()
+        else:
+            pass
 
     @staticmethod
     def return_ticker(row):
@@ -66,20 +92,6 @@ class TickerDetails:
         for row in cursor:
             return TickerDetails.return_ticker(row)
 
-    def get_nse_future_token(self, symbol, month_offset = 0):
-        if month_offset == 0:
-            month = datetime.now().strftime('%h').upper()
-        else:
-            month = (datetime.now()+ relativedelta.relativedelta(months=month_offset)).strftime('%h').upper()
-        select_query = '''SELECT symbol_token_nfo_map.* from symbol_token_nfo_map join symbol_token_nse_map 
-                          on symbol_token_nfo_map.name = symbol_token_nse_map.name
-                          where symbol_token_nse_map.symbol = "{symbol}"
-                          and symbol_token_nfo_map.instrumenttype like "FUT%"
-                          and symbol_token_nfo_map.expiry like "%{month}%"'''
-        cursor = self.conn.execute(select_query.format(symbol = symbol, month = month))
-        for row in cursor:
-            return TickerDetails.return_ticker(row)
-
     @staticmethod
     def get_option_strike_offset(option_type, strike):
         if strike == 'ITM':
@@ -88,7 +100,7 @@ class TickerDetails:
             else:
                 offset = 2
         elif strike == 'OTM':
-            if option_type == 'CE':
+            if option_type == 'PE':
                 offset = 2
             else:
                 offset = 1
@@ -96,27 +108,31 @@ class TickerDetails:
             offset = 0
         return offset
 
-    def _get_all_expiry(self, symbol):
-        select_query = 'select distinct symbol_token_nfo_map.expiry  from  symbol_token_nfo_map join symbol_token_nse_map on symbol_token_nfo_map.name = symbol_token_nse_map.name where symbol_token_nse_map.symbol = "{symbol}"'
+    def _get_all_expiry(self, exchange, symbol):
+        if exchange == 'CDS':
+            select_query = 'select distinct symbol_token_cds_map.expiry  from  symbol_token_cds_map  where symbol_token_cds_map.name = "{symbol}"'
+        else:
+            select_query = 'select distinct symbol_token_nfo_map.expiry  from  symbol_token_nfo_map join symbol_token_nse_map on symbol_token_nfo_map.name = symbol_token_nse_map.name where symbol_token_nse_map.symbol = "{symbol}"'
         cursor = self.conn.execute(select_query.format(symbol=symbol))
         expiry_list = []
         for row in cursor:
-            expiry_list.append(datetime.strptime(row[0], '%d%b%Y'))
+            if row[0] != "":
+                expiry_list.append(datetime.strptime(row[0], '%d%b%Y'))
         expiry_list.sort()
         return expiry_list
 
-    def get_monthly_expiry_for_symbol(self, symbol, monthly_expiry_offset=0):
+    def get_monthly_expiry_for_symbol(self, exchange, symbol, monthly_expiry_offset=0):
         curr_date = datetime.now()
-        expiry_list = self._get_all_expiry(symbol)
+        expiry_list = self._get_all_expiry(exchange, symbol)
         df = pd.DataFrame({'LoadedDate': expiry_list})
         month = df.groupby(df.LoadedDate - pd.offsets.MonthEnd()).last().reset_index(drop=True)
         month_ends = month['LoadedDate'].to_list()
         all_valid_monthly_expiry = [x for x in month_ends if curr_date < x ]
         return all_valid_monthly_expiry[monthly_expiry_offset].strftime('%d%b%Y').upper()
 
-    def get_weekly_expiry_for_symbol(self, symbol, weekly_expiry_offset=0):
+    def get_weekly_expiry_for_symbol(self, exchange, symbol, weekly_expiry_offset=0):
         curr_date = datetime.now()
-        expiry_list = self._get_all_expiry(symbol)
+        expiry_list = self._get_all_expiry(exchange, symbol)
         #check weekly expiry exists
         week_counts = 0
         next_month_expiry = []
@@ -129,13 +145,44 @@ class TickerDetails:
         else:
             return next_month_expiry[weekly_expiry_offset].strftime('%d%b%Y').upper()
 
-    def get_nse_option_token(self, symbol, option_type, ltp, strike='ATM', expiry_type='MONTHLY', offset=0):
-        if expiry_type == 'WEEKLY':
-            expiry = self.get_weekly_expiry_for_symbol(symbol, offset)
+    def get_future_token(self, exchange, symbol, month_offset=0):
+        expiry = self.get_monthly_expiry_for_symbol(exchange, symbol, month_offset)
+        if exchange == 'CDS':
+            select_query = '''SELECT symbol_token_cds_map.* from symbol_token_cds_map 
+                              where symbol_token_cds_map.name = "{symbol}"
+                              and symbol_token_cds_map.instrumenttype like "FUT%"
+                              and symbol_token_cds_map.expiry = "{expiry}"
+                            '''
         else:
-            expiry = self.get_monthly_expiry_for_symbol(symbol, offset)
+            select_query = '''SELECT symbol_token_nfo_map.* from symbol_token_nfo_map join symbol_token_nse_map 
+                              on symbol_token_nfo_map.name = symbol_token_nse_map.name
+                              where symbol_token_nse_map.symbol = "{symbol}"
+                              and symbol_token_nfo_map.instrumenttype like "FUT%"
+                              and symbol_token_nfo_map.expiry = "{expiry}"'''
+        cursor = self.conn.execute(select_query.format(symbol=symbol, expiry=expiry))
+        for row in cursor:
+            return TickerDetails.return_ticker(row)
+
+    def get_option_token(self, exchange, symbol, option_type, ltp, expiry_type='MONTHLY', strike='ATM', offset=0):
+        if expiry_type == 'WEEKLY':
+            expiry = self.get_weekly_expiry_for_symbol(exchange, symbol, offset)
+        else:
+            expiry = self.get_monthly_expiry_for_symbol(exchange, symbol, offset)
         price_offset = TickerDetails.get_option_strike_offset(option_type, strike)
-        select_query = '''select * from 
+        if exchange == 'CDS':
+            select_query = '''select * from 
+                            (SELECT *, 
+                               substr(substr(replace(symbol, name, ""), 6, 15), -2, -10) as strike_price ,
+                                substr(symbol, -2, 10) as option_type 
+                                from symbol_token_cds_map 
+                                where symbol_token_cds_map.name = "{symbol}")
+                          where option_type = "{option_type}"
+                          and expiry = "{expiry}"
+                          ORDER BY ABS(strike_price - {ltp})
+                          LIMIT 1
+                          OFFSET {price_offset}'''
+        else:
+            select_query = '''select * from 
                             (SELECT symbol_token_nfo_map.*, 
                                 substr(substr(replace(replace(symbol_token_nfo_map.symbol, symbol_token_nfo_map.name, ""), substr(symbol_token_nfo_map.expiry, 0,6), ""), -2, -10), 3, 10) as strike_price,
                                 substr(symbol_token_nfo_map.symbol, -2, 10) as option_type 
@@ -157,7 +204,14 @@ class TickerDetails:
 
 if __name__ == '__main__':
     obj = TickerDetails()
-    #ticker = obj.get_nse_future_token('MARUTI-EQ', 1)
-    ticker = obj.get_nse_option_token('MARUTI-EQ', 'PE', 7000, 'ATM')
+    # print(obj._get_latest_ticker_details_load_date())
+    # obj.load_data_into_symbol_token_map()
+    # print(obj._get_latest_ticker_details_load_date())
+    ticker = obj.get_future_token('NSE', 'MARUTI-EQ')
     print(ticker.symbol)
+    ticker = obj.get_option_token('NSE', 'MARUTI-EQ', 'PE', 7235, 'MONTHLY', 'OTM')
+    print(ticker.symbol, ticker.expiry)
+    #ticker = obj.get_nse_future_token('MARUTI-EQ', 1)
+    #ticker = obj.get_nse_option_token('MARUTI-EQ', 'PE', 7000, 'ATM')
+    #print(ticker.symbol)
     #print(month_end_expiry)
