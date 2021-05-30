@@ -12,7 +12,7 @@ from src.DB.market_data.MarketDataWebSocket import MarketDataWebsocket
 
 
 if __name__ == '__main__':
-    logger_dir = os.path.join(pathlib.Path(__file__).parents[1], 'Log/MarketData')
+    logger_dir = os.path.join(pathlib.Path(__file__).parents[2], 'Log/MarketData')
     date_str = datetime.datetime.now().strftime("%d%m%Y")
     log_file_name = 'market_data_' + date_str + '.log'
     log_file = os.path.join(logger_dir, log_file_name)

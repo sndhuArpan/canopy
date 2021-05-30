@@ -19,7 +19,7 @@ from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 class MarketDataWebSocketFallback:
 
     def __init__(self):
-        logger_dir = os.path.join(pathlib.Path(__file__).parents[1], 'Log/MarketData')
+        logger_dir = os.path.join(pathlib.Path(__file__).parents[2], 'Log/MarketData')
         date_str = datetime.now().strftime("%d%m%Y")
         log_file_name = 'market_data_' + date_str + '.log'
         log_file = os.path.join(logger_dir, log_file_name)
