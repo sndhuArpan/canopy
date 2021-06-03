@@ -12,6 +12,7 @@ runProcess() {
 }
 
 
-cmd="runProcess /Users/Sandhu/canopy/canopy/src/DB/market_data/RunMarketDataWebSocketFallback.py"
-$cmd &
-runProcess /Users/Sandhu/canopy/canopy/src/DB/market_data/RunMarketDataLoader.py
+#cmd="/usr/local/bin/python3.9 /Users/Sandhu/canopy/canopy/src/DB/market_data/RunMarketDataWebSocketFallback.py"
+#$cmd &
+/usr/local/bin/python3.9 /Users/Sandhu/canopy/canopy/src/DB/market_data/RunMarketDataWebSocketFallback.py
+#runProcess /Users/Sandhu/canopy/canopy/src/DB/market_data/RunMarketDataLoader.py
