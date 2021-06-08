@@ -12,7 +12,6 @@ runProcess() {
 }
 
 
-#cmd="python3 /home/ec2-user/canopy/canopy/src/DB/market_data/RunMarketDataWebSocketFallback.py"
-#$cmd &
-python3 /home/ec2-user/canopy/canopy/src/DB/market_data/RunMarketDataWebSocketFallback.py
-#runProcess /home/ec2-user/canopy/canopysrc/DB/market_data/RunMarketDataLoader.py
+cmd="python3 /home/ec2-user/canopy/canopy/src/DB/market_data/RunMarketDataWebSocketFallback.py"
+$cmd &
+runProcess /home/ec2-user/canopy/canopy/src/DB/market_data/RunMarketDataLoader.py

@@ -51,7 +51,7 @@ class MarketDataWebSocketFallback:
                     MarketDataWebSocketFallback.update_ltp_in_market_date(item[0], item[1],
                                                                           data_dict.get('data').get('ltp'),
                                                                           datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-                    MarketData().auto_deregister_token()
+                    #MarketData().auto_deregister_token()
                 except Exception as e:
                     self.logger.error('Exception : {0}\n{1}'.format(str(e), traceback.format_exc()))
                     time.sleep(1)

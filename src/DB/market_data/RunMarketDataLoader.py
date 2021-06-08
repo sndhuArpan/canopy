@@ -4,6 +4,7 @@ import pathlib
 import sys
 import traceback
 
+sys.path.append('/home/ec2-user/canopy/canopy')
 sys.path.append('/Users/Sandhu/canopy/canopy/')
 sys.path.append('/Users/Sandhu/canopy/canopy/src')
 
