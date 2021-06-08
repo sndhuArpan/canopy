@@ -1,11 +1,12 @@
 import datetime
+import threading
 import time
 import os
 import sys
 import traceback
-import threading
 import pathlib
 
+sys.path.append('/home/ec2-user/canopy/canopy')
 sys.path.append('/Users/Sandhu/canopy/canopy/')
 sys.path.append('/Users/Sandhu/canopy/canopy/src')
 
@@ -50,6 +51,7 @@ class MarketDataWebSocketFallback:
                     MarketDataWebSocketFallback.update_ltp_in_market_date(item[0], item[1],
                                                                           data_dict.get('data').get('ltp'),
                                                                           datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+                    MarketData().auto_deregister_token()
                 except Exception as e:
                     self.logger.error('Exception : {0}\n{1}'.format(str(e), traceback.format_exc()))
                     time.sleep(1)
@@ -80,18 +82,13 @@ class MarketDataWebSocketFallback:
                 self.get_ltp_price_fallback()
 
 
-
-
 if __name__ == '__main__':
     fallback_obj = MarketDataWebSocketFallback()
-    fallback_obj.get_ltp_price_fallback()
-    # time.sleep(60)
-    # t = threading.Thread(target=fallback_obj.print_monitoring, daemon=True)
-    # t.start()
-    # while True:
-    #     fallback_obj.monitor_and_fallback()
-    # #fallback_obj.update_ltp_in_market_date(228530, 'MCX', None, None)
-
+    time.sleep(60)
+    t = threading.Thread(target=fallback_obj.print_monitoring, daemon=True)
+    t.start()
+    while True:
+        fallback_obj.monitor_and_fallback()
 
 
 

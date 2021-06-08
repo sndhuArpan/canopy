@@ -24,6 +24,7 @@ if __name__ == '__main__':
     try:
         logger.info('Initiating start_ticker')
         market_data_obj.start_ticker()
+        del market_data_obj
     except Exception as e:
         logger.error('Exception : {0}\n{1}'.format(str(e), traceback.format_exc()))
         logger.error('#####   TICKER STOPPED   ####')

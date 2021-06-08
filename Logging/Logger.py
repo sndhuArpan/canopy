@@ -16,7 +16,7 @@ class GetLogger:
         c_handler.setFormatter(c_format)
         # Add handlers to the logger
         self.logger.addHandler(c_handler)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.ERROR)
 
         if self.log_file is not None:
             # Create base directory if missing

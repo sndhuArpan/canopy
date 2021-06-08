@@ -57,15 +57,34 @@ class MarketData:
         return insert_query
 
     def register_token(self, model):
-        query = self.__insert_table_daily_query().format(token=model.token,
-                                                         exchange=model.exchange)
-        self.conn.execute(query)
-        self.conn.commit()
+        #check token already register
+        check_query = '''select count(*) from market_data where token = "{token}" and exchange = "{exchange}"'''
+        cursor = self.conn.execute(check_query.format(token=model.token, exchange=model.exchange))
+        for row in cursor:
+            if row[0] >= 1:
+                pass
+            else:
+                query = self.__insert_table_daily_query().format(token=model.token, exchange=model.exchange)
+                self.conn.execute(query)
+                self.conn.commit()
 
     def deregister_token(self, token):
         query = 'delete from market_data where token = {token}'.format(token=token)
         self.conn.execute(query)
         self.conn.commit()
+
+    def auto_deregister_token(self):
+        get_all_token_and_llp = '''select token, ltp_time from market_data'''
+        cursor = self.conn.execute(get_all_token_and_llp)
+        for row in cursor:
+            token = row[0]
+            ltp_time = row[1]
+            if ltp_time is None:
+                self.deregister_token(token)
+            else:
+                last_trade_time = datetime.datetime.strptime(ltp_time, '%d/%m/%Y %H:%M:%S')
+                if last_trade_time < (datetime.datetime.now() - datetime.timedelta(seconds=120)):
+                    self.deregister_token(token)
 
     def deregister_all_token(self):
         query = 'delete from market_data'
@@ -177,16 +196,16 @@ class MarketData:
 
 if __name__ == '__main__':
     database_conn = MarketData()
-    print(database_conn.get_all_register_token())
+    database_conn.auto_deregister_token()
     # print(database_conn.get_max_last_traded_time())
     # import time
-    # model1 = LtpPriceModel().initialize(228530, 'MCX')
+    #model1 = LtpPriceModel().initialize(220822, 'MCX')
     # model2 = LtpPriceModel().initialize(220822, 'MCX')
     # model3 = LtpPriceModel().initialize(228925, 'MCX')
     # model4 = LtpPriceModel().initialize(221598, 'MCX')
     # # model5 = LtpPriceModel().initialize(11364, 'NSE')
     # database_conn = MarketData()
-    # database_conn.register_token(model1)
+    #database_conn.register_token(model1)
     # database_conn = MarketData()
     # database_conn.register_token(model2)
     # database_conn = MarketData()

@@ -1,8 +1,11 @@
-from smartapi import WebSocket
 from smartapi import SmartConnect
-from src.DB.market_data.Market_Data import TickerMsg
+from smartapi import WebSocket
+
+from src.DB.market_data.Market_Data import TickerMsg, MarketData, LtpPriceModel
 from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 
+import warnings
+warnings.filterwarnings("ignore")
 
 class MarketDataWebsocket:
 
@@ -53,24 +56,27 @@ class MarketDataWebsocket:
         ws.stop()
 
 
-if __name__ == '__main__':
-    from Logging.Logger import GetLogger
-    from Market_Data import LtpPriceModel, MarketData
-    # token1 = LtpPriceModel()
-    # token1.initialze('9059', 'MCX')
-    # token2 = LtpPriceModel()
-    # token2.initialze('228530', 'MCX')
-    # token3 = LtpPriceModel()
-    # token3.initialze('220822', 'MCX')
-    # MarketData_obj = MarketData()
-    # MarketData_obj.register_token(token1)
-    # MarketData_obj = MarketData()
-    # MarketData_obj.register_token(token2)
-    # MarketData_obj = MarketData()
-    # MarketData_obj.register_token(token3)
-    logger = GetLogger().get_logger()
-    obj = MarketDataWebsocket('S705342', logger)
-    try:
-        obj.start_ticker()
-    except Exception as e:
-        print('Out of start')
+# if __name__ == '__main__':
+#     from Logging.Logger import GetLogger
+#     from Market_Data import LtpPriceModel, MarketData
+#     from src.DB.static_db.TickerDetails import TickerDetails
+#     token1 = LtpPriceModel()
+#     token1.initialize('9059', 'MCX')
+#     token_detail = TickerDetails().get_future_token('CDS', 'USDINR')
+#     # market db object
+#     # Register Symbols
+#     ltp_model = LtpPriceModel().initialize(token_detail.token, token_detail.exch_seg)
+#     # self.market_data.register_token(ltp_model)
+#     MarketData_obj = MarketData()
+#     MarketData_obj.register_token(token1)
+#     MarketData_obj.register_token(ltp_model)
+#     # MarketData_obj = MarketData()
+#     # MarketData_obj.register_token(token2)
+#     # MarketData_obj = MarketData()
+#     # MarketData_obj.register_token(token3)
+#     logger = GetLogger().get_logger()
+#     obj = MarketDataWebsocket('S705342', logger)
+#     try:
+#         obj.start_ticker()
+#     except Exception as e:
+#         print('Out of start')
