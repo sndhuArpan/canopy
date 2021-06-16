@@ -3,9 +3,10 @@ from src.models.ProductType import ProductType
 
 
 class OrderInputParams:
-    def __init__(self, tradingSymbol=None, symbolToken=None, trade=None):
-        self.exchange = "NSE"  # default
+    def __init__(self, trade=None):
+          # default
         if trade is None:
+            self.exchange = "NSE"
             self.variety = ''  # variety
             self.orderId = ''
             self.direction = ''
@@ -23,12 +24,13 @@ class OrderInputParams:
             self.disclosedquantity = ''  # Quantity to disclose publicly (for equity trades)
             self.ordertag = ''
             return
+        self.exchange = trade.exchange
         self.variety = trade.variety  # variety
         self.orderId = ''
         self.direction = trade.direction
         self.productType = trade.productType  # Product type (CNC,MIS)t
-        self.tradingSymbol = tradingSymbol # Trading Symbol of the instrument
-        self.symbolToken = symbolToken # Symbol Token is unique identifier
+        self.tradingSymbol = trade.tradingSymbol # Trading Symbol of the instrument
+        self.symbolToken = trade.symbolToken # Symbol Token is unique identifier
         self.duration = trade.duration #Order duration (DAY,IOC)
         self.orderType = trade.orderType  # Order type (MARKET, LIMIT etc.)
         self.qty = trade.qty
@@ -39,11 +41,3 @@ class OrderInputParams:
         self.trailingStopLoss = ''# Only For ROBO (Bracket Order)
         self.disclosedquantity = '' # Quantity to disclose publicly (for equity trades)
         self.ordertag = trade.system_tradeID  #It is optional to apply to an order to identify.
-
-    def __str__(self):
-        return "symbol=" + str(self.tradingSymbol) + ", symbolToken=" + str(
-            self.symbolToken) + ", exchange=" + self.exchange \
-               + ", productType=" + self.productType + ", segment=" + self.segment \
-               +  ", orderType=" + self.orderType \
-               + ", qty=" + str(self.qty) + ", price=" + str(self.price) + ", triggerPrice=" + str(self.triggerPrice) \
-               + ", isFnO=" + str(self.isFnO)

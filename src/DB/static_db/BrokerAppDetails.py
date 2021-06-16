@@ -22,15 +22,15 @@ class Connection:
 class BrokerAppDetails:
 
     def __init__(self):
-        get_file_dir = os.path.dirname(__file__)
-        db_file = os.path.join(get_file_dir, 'static_db.db')
-        self.conn = sqlite3.connect(db_file)
-
-        encrypt_file = os.path.join(pathlib.Path(os.path.dirname(__file__)).parents[2], 'EncryptionKey.txt')
-        infile = open(encrypt_file, 'r')
-        key = infile.readline()
-        byte_key = bytes(key, encoding='utf8')
-        self.cipher_suite = Fernet(byte_key)
+        # get_file_dir = os.path.dirname(__file__)
+        # db_file = os.path.join(get_file_dir, 'static_db.db')
+        # self.conn = sqlite3.connect(db_file)
+        #
+        # encrypt_file = os.path.join(pathlib.Path(os.path.dirname(__file__)).parents[2], 'EncryptionKey.txt')
+        # infile = open(encrypt_file, 'r')
+        # key = infile.readline()
+        # byte_key = bytes(key, encoding='utf8')
+        # self.cipher_suite = Fernet(byte_key)
 
         self.connection_dict = {}
 
@@ -92,12 +92,15 @@ class BrokerAppDetails:
             return False, None
 
     def get_normal_connection(self, client_id):
-        connection_exists, connection = self.check_connection_exists(client_id)
-        if connection_exists:
-            return connection
-        else:
-            self.create_normal_connection(client_id)
-            return self.connection_dict.get(client_id)
+        connect = SmartConnect(api_key="SaRTKx4I")
+        connect.generateSession("S705342", "poiuhbnm@2")
+        return connect
+        # connection_exists, connection = self.check_connection_exists(client_id)
+        # if connection_exists:
+        #     return connection
+        # else:
+        #     self.create_normal_connection(client_id)
+        #     return self.connection_dict.get(client_id)
 
     def create_all_connections(self):
         all_connection_query =  '''select client_id from brokerclientdetails'''

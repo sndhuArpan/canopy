@@ -8,11 +8,12 @@ from src.models.Variety import Variety
 
 
 class Trade:
-    def __init__(self, tradingSymbol=None, clientId=None, strategy_trade_id=None):
-        self.exchange = "NSE"
+    def __init__(self, tradingSymbol=None, symbolToken=None, clientId=None, strategy_trade_id=None):
+        self.exchange = 'NSE'
         self.system_tradeID = uuid.uuid4()  # Unique ID for each trade
         self.strategy_trade_id = strategy_trade_id
         self.tradingSymbol = tradingSymbol
+        self.symbolToken = symbolToken
         self.clientId = clientId
         self.strategy = ""
         self.direction = ""

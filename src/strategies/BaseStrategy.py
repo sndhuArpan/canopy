@@ -5,10 +5,6 @@ from datetime import datetime
 from Data_Wrappers.Angel_Broker.Angel_Broker_Wrapper import Angel_Broker_Wrapper
 from src.models.Exchange import Exchange
 from src.models.ProductType import ProductType
-from src.models.MarketTiming import MarketTiming
-#from src.core.Quotes import Quotes
-#from trademgmt.TradeManager import TradeManager
-from src.ticker.AngelSymbol.AngelSymbol import AngelSymbol
 from utils.Utils import Utils
 
 
@@ -16,22 +12,19 @@ class BaseStrategy:
     def __init__(self, name):
         # NOTE: All the below properties should be set by the Derived Class (Specific to each strategy)
         self.name = name  # strategy name
-        self.enabled = True  # Strategy will be run only when it is enabled
         self.productType = ProductType.MIS  # MIS/NRML/CNC etc
         self.symbols = []  # List of stocks to be traded under this strategy
         self.slPercentage = 0
         self.exchange = Exchange.NSE
-        self.targetPercentage = 0
         self.startTimestamp = Utils.getMarketStartTime()  # When to start the strategy. Default is Market start time
         self.stopTimestamp = None  # This is not square off timestamp. This is the timestamp after which no new trades will be placed under this strategy but existing trades continue to be active.
         self.squareOffTimestamp = None  # Square off time
-        self.capital = 10000  # Capital to trade (This is the margin you allocate from your broker account for this strategy)
-        self.leverage = 1  # 2x, 3x Etc
-        self.maxTradesPerDay = 1  # Max number of trades per day under this strategy
-        self.isFnO = False  # Does this strategy trade in FnO or not
-        self.capitalPerSet = 0  # Applicable if isFnO is True (Set means 1CE/1PE or 2CE/2PE etc based on your strategy logic)
         self.tradesCreatedSymbols = []  # Add symbol to this list when a trade is created
         self.angel_data = Angel_Broker_Wrapper()
+        self.max_buy_call = 1
+        self.max_sl_call = 1
+        self.max_sell_call = 1
+        self.incubation = True  # Strategy will be run only when it is enabled
         # Register strategy with trade manager
         # TradeManager.registerStrategy(self)
 
@@ -67,7 +60,7 @@ class BaseStrategy:
         #     logging.warning("%s: Not going to run strategy as market is closed.", self.getName())
         #     return
         #
-        # now = datetime.now()
+        now = datetime.now()
         # if now < Utils.getMarketStartTime():
         #     Utils.waitTillMarketOpens(self.getName())
         #
@@ -113,4 +106,7 @@ class BaseStrategy:
         return True
 
     def getQuote(self, tradingSymbol, exchange):
-        return AngelSymbol.get_symbol_token(exchange,tradingSymbol)
+        return AngelSymbol.get_symbol_token(exchange, tradingSymbol)
+
+    def placeTrade(self, trade):
+        pass

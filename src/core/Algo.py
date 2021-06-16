@@ -2,9 +2,9 @@ import logging
 import threading
 import time
 
+from src.strategies.CurrencyStrategy import CurrencyStrategy
 from src.strategies.SampleStrategy import SampleStrategy
-from src.ticker.AngelSymbol.AngelSymbol import AngelSymbol
-
+from src.DB.static_db.TickerDetails import TickerDetails
 
 # from Test import Test
 from src.trademanager.TradeManager import TradeManager
@@ -13,14 +13,18 @@ from src.trademanager.TradeManager import TradeManager
 class Algo:
     isAlgoRunning = None
 
+    def __init__(self):
+        #SYMBOL load each day
+        TickerDetails().load_data_into_symbol_token_map()
+
+
     @staticmethod
     def startAlgo():
         if Algo.isAlgoRunning == True:
             logging.info("Algo has already started..")
             return
-
+        TickerDetails().load_data_into_symbol_token_map()
         logging.info("Starting Algo...")
-        AngelSymbol.create_csv_by_segment()
 
         # start trade manager in a separate thread
 
@@ -31,8 +35,8 @@ class Algo:
         # start running strategies: Run each strategy in a separate thread
         # threading.Thread(target=SampleStrategy.getInstance().run).start()
         # threading.Thread(target=BNFORB30Min.getInstance().run).start()
-
-        threading.Thread(target=TradeManager.update_trade_status).start()
+        threading.Thread(target=CurrencyStrategy.getInstance().run).start()
+        # threading.Thread(target=TradeManager.update_trade_status).start()
 
         Algo.isAlgoRunning = True
         logging.info("Algo started.")

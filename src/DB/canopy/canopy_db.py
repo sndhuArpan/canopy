@@ -4,6 +4,8 @@ import os
 
 from pandas import DataFrame
 
+from utils.telegram import telegram
+
 
 class trade_status_model:
     def __init__(self, strategy_name):
@@ -94,7 +96,6 @@ class canopy_db:
                                                          instrument_type=model.instrument_type)
         self.conn.execute(query)
         self.conn.commit()
-        self.conn.close()
 
     def update_daily_entry(self, model):
         update_query = 'Update ' + model.strategy_name + '_Daily_Status set'
@@ -106,7 +107,6 @@ class canopy_db:
             model.system_trade_id) + '"'
         self.conn.execute(update_query)
         self.conn.commit()
-        self.conn.close()
 
     def update_daily_entry_status(self, model):
         update_query = 'Update ' + model.strategy_name + '_Daily_Status set'
@@ -115,7 +115,6 @@ class canopy_db:
         update_query = update_query + ' where  system_trade_id = "' + str(model.system_trade_id) + '"'
         self.conn.execute(update_query)
         self.conn.commit()
-        self.conn.close()
 
     def update_daily_entry_filled(self, model):
         update_query = 'Update ' + model.strategy_name + '_Daily_Status set'
@@ -130,7 +129,6 @@ class canopy_db:
         update_query = update_query[0:update_query.__len__() - 1] + ' where  system_trade_id = "' + str(model.system_trade_id) + '"'
         self.conn.execute(update_query)
         self.conn.commit()
-        self.conn.close()
 
     def __select_columns(self):
         return ' client_id,order_id,system_trade_id,strategy_trade_id,order_type,order_status,transaction_type,share_name,qty,fill_qty,stoploss,fill_time '
@@ -233,15 +231,19 @@ class canopy_db:
         for i in cursor.description:
             columns_list.append(i[0])
         df.columns = columns_list
-        df = df.loc[df['order_status'] == 'complete']
+        # df = df.loc[df['order_status'] == 'complete']
         get_file_dir = os.path.dirname(__file__)
         csv_file_path = os.path.join(get_file_dir, strategy_name+'_trades.csv')
         if os.path.exists(csv_file_path):
             df.to_csv(csv_file_path, mode='a', header=False)
         else:
             df.to_csv(csv_file_path)
+        csv_file = open(csv_file_path, 'rb')
+        telegram.send_file(csv_file)
         if delete:
             delete_query = 'delete from ' + strategy_name + '_Daily_Status'
             self.conn.execute(delete_query)
             self.conn.commit()
+
+
 

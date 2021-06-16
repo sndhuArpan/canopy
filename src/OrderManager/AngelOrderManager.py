@@ -36,7 +36,6 @@ class AngelOrderManager(BaseOrderManager):
             }
 
             orderId = angel_connect.placeOrder(orderParam)
-
             logging.info('%s: Order placed successfully, orderId = %s', self.broker, orderId)
             return orderId
         except Exception as e:
