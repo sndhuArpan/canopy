@@ -9,8 +9,10 @@ PROJECT_BASE_PATH='/home/ec2-user/canopy/canopy'
 
 echo "Installing dependencies..."
 sudo yum update
+sudo yum groupinstall "Development Tools" -y
 sudo yum install -y python3
 sudo yum install -y sqlite git
+sudo yum install -y python3-devel
 
 # Create project directory
 mkdir -p $PROJECT_BASE_PATH

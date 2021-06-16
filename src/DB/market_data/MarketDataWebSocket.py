@@ -1,11 +1,12 @@
-from smartapi import SmartConnect
-from smartapi import WebSocket
+from smartapi.smartConnect import SmartConnect
+from smartapi.webSocket import WebSocket
 
 from src.DB.market_data.Market_Data import TickerMsg, MarketData, LtpPriceModel
 from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 
 import warnings
 warnings.filterwarnings("ignore")
+
 
 class MarketDataWebsocket:
 

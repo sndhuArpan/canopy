@@ -1,6 +1,7 @@
 pandas
+wheel
 websocket
-smartapi-python
+smartapi
 twisted
 pyopenssl
 autobahn

@@ -1,6 +1,5 @@
 import json
 import logging
-import math
 import os
 import uuid
 import time
@@ -9,11 +8,10 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 
-from Data_Wrappers.Indicators.EMA import EMA
-from Data_Wrappers.Indicators.RSI import RSI
 from src.DB.market_data.Market_Data import MarketData, LtpPriceModel
 from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 from src.DB.static_db.TickerDetails import TickerDetails
+from src.DB.static_db.ClientStrategyInfo import ClientStrategyInfo
 from src.models.Direction import Direction
 from src.models.Duration import Duration
 from src.models.Exchange import Exchange
@@ -56,15 +54,12 @@ class CurrencyStrategy_30(BaseStrategy):
 
         self.trade_dataframe = pd.DataFrame(columns=['client', 'buy_trade', 'sell_trade', 'sl_trade'])
         self.trade_manager = TradeManager()
-        tFile = open(os.path.abspath('src/data/client_strategy_map.py'), 'r')
-        client_strategy_data = json.loads(tFile.read())['mapping']
-        for i in client_strategy_data:
-            if self.__class__.__name__ == i['strategy']:
-                for client in i['client']:
-                    self.client_list[client] = uuid.uuid1()
-                    self.trade_dataframe = self.trade_dataframe.append({'client': client, 'buy_trade': 0,
-                                                                        'sell_trade': 0, 'sl_trade': 0},
-                                                                       ignore_index=True)
+        for client in ClientStrategyInfo().get_client_by_strategy(self.__class__.__name__):
+            self.client_list[client] = uuid.uuid1()
+            self.trade_dataframe = self.trade_dataframe.append({'client': client, 'buy_trade': 0,
+                                                                'sell_trade': 0, 'sl_trade': 0},
+                                                               ignore_index=True)
+
         self.trade_dataframe.index = self.trade_dataframe['client']
         self.max_sl_call = 2
         self.token_detail = TickerDetails().get_future_token(self.exchange, 'USDINR')
@@ -72,12 +67,11 @@ class CurrencyStrategy_30(BaseStrategy):
         self.market_data = MarketData()
         # Register Symbols
         ltp_model = LtpPriceModel().initialize(self.token_detail.token, self.token_detail.exch_seg)
-        # self.market_data.register_token(ltp_model)
+        self.market_data.register_token(ltp_model)
 
     def process(self):
         self.one_pip = 0.0025
-        connection = BrokerAppDetails().get_normal_connection('S705342')
-        data = connection.ltpData(self.exchange, self.token_detail.symbol, self.token_detail.token).__getitem__('data')
+        data= self.market_data.get_ltp_data(self.exchange, self.token_detail.symbol, self.token_detail.token)
         high_range = data['high']
         low_range = data['low']
         buy_high_range = high_range + self.one_pip
@@ -87,7 +81,7 @@ class CurrencyStrategy_30(BaseStrategy):
         while True:
             if datetime.now() > self.stopTimestamp:
                 break
-            ltp_price = self.get_ltp(self.token_detail.token)
+            ltp_price = self.get_latest_price_websocket(self.token_detail.token)
             if ltp_price >= buy_high_range:
                 self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
@@ -112,7 +106,7 @@ class CurrencyStrategy_30(BaseStrategy):
                 break
             time.sleep(1)
 
-    def get_ltp(self, token):
+    def get_latest_price_websocket(self, token):
         return self.market_data.get_market_data(token).ltp_price
 
     def generateTrade_buy(self, client, stop_loss, price):
@@ -142,7 +136,7 @@ class CurrencyStrategy_30(BaseStrategy):
             half_sell = False
             sell_qty = 0
             while True:
-                latest_ltp = self.get_ltp(self.token_detail.token)
+                latest_ltp = self.get_latest_price_websocket(self.token_detail.token)
                 sell_trade = False
                 if datetime.now() < start_time and not half_sell:
                     if latest_ltp >= target:
@@ -214,7 +208,7 @@ class CurrencyStrategy_30(BaseStrategy):
             half_buy = False
             buy_qty = 0
             while True:
-                latest_ltp = self.get_ltp(self.token_detail.token)
+                latest_ltp = self.get_latest_price_websocket(self.token_detail.token)
                 buy_trade = False
                 if datetime.now() < start_time and not half_buy:
                     if latest_ltp <= target:

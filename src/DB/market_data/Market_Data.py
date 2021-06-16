@@ -1,7 +1,9 @@
 import sqlite3
 import os
 import datetime
+
 from src.DB.market_data.exchange_mapping import exchange_mapping
+from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 
 
 class LtpPriceModel:
@@ -192,6 +194,11 @@ class MarketData:
                 return row[0]
             else:
                 return None
+
+    def get_ltp_data(self, exchange, symbol, token):
+        connection = BrokerAppDetails().get_normal_connection('S705342')
+        data = connection.ltpData(exchange, symbol, token).__getitem__('data')
+        return data
 
 
 if __name__ == '__main__':
