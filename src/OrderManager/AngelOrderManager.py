@@ -29,7 +29,7 @@ class AngelOrderManager(BaseOrderManager):
                 'quantity': str(orderInputParams.qty),
                 'triggerprice': str(orderInputParams.triggerPrice),
                 'squareoff': str(orderInputParams.squareoff),
-                'stoploss': str(orderInputParams.stoploss),
+                'stop_loss': str(orderInputParams.stoploss),
                 'trailingStopLoss': str(orderInputParams.trailingStopLoss),
                 'disclosedquantity': str(orderInputParams.disclosedquantity),
                 'ordertag': str(orderInputParams.ordertag)

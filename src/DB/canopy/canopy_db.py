@@ -44,8 +44,8 @@ class trade_status_model:
             self.share_name = kwargs.get('share_name')
         if kwargs.get('qty'):
             self.qty = kwargs.get('qty')
-        if kwargs.get('stoploss'):
-            self.stoploss = kwargs.get('stoploss')
+        if kwargs.get('stop_loss'):
+            self.stoploss = kwargs.get('stop_loss')
         if kwargs.get('instrument_type'):
             self.instrument_type = kwargs.get('instrument_type')
 
@@ -69,7 +69,7 @@ class canopy_db:
                  price       varchar(10) ,
                  qty       varchar(10),
                  fill_qty       varchar(10),
-                 stoploss       varchar(10),
+                 stop_loss       varchar(10),
                  fill_time    varchar(10),
                  instrument_type    varchar(10));'''
         self.conn.execute(create_table)
@@ -78,8 +78,8 @@ class canopy_db:
 
     def __insert_table_daily_query(self):
         insert_query = 'INSERT INTO {strategy_name}_Daily_Status (client_id, system_trade_id,strategy_trade_id, order_type,order_status,' \
-                       'transaction_type,share_name,qty,stoploss,instrument_type) values("{client_id}", "{system_trade_id}","{strategy_trade_id}", ' \
-                       '"{order_type}", "{order_status}", "{transaction_type}", "{share_name}", "{qty}", "{stoploss}", "{instrument_type}") '
+                       'transaction_type,share_name,qty,stop_loss,instrument_type) values("{client_id}", "{system_trade_id}","{strategy_trade_id}", ' \
+                       '"{order_type}", "{order_status}", "{transaction_type}", "{share_name}", "{qty}", "{stop_loss}", "{instrument_type}") '
         return insert_query
 
     def insert_strategy_daily(self, model):
@@ -131,7 +131,7 @@ class canopy_db:
         self.conn.commit()
 
     def __select_columns(self):
-        return ' client_id,order_id,system_trade_id,strategy_trade_id,order_type,order_status,transaction_type,share_name,qty,fill_qty,stoploss,fill_time '
+        return ' client_id,order_id,system_trade_id,strategy_trade_id,order_type,order_status,transaction_type,share_name,qty,fill_qty,stop_loss,fill_time '
 
     def __convert_row_model_list(self, cursor, strategy_name):
         model_list = []

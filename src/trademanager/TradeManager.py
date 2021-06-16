@@ -125,7 +125,7 @@ class TradeManager:
                             sql.update_daily_entry_filled(order)
                 time.sleep(120)
         except Exception as e:
-            logging.error('Order Status update Failed %s',str(e))
+            logging.error('Order Status update Failed %s', str(e))
             telegram.send_text(str(e))
 
 

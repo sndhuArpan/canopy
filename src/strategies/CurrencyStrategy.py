@@ -181,7 +181,7 @@ class CurrencyStrategy(BaseStrategy):
         trade.create_trade_orderType_market(direction, self.quantity, Duration.DAY, self.productType, stoploss)
         orderId = self.placeTrade(trade, client)
         # placing Stoploss
-        # sl_system_id = self.placeStoploss(trade.system_tradeID, opposite_dir, client, stoploss)
+        # sl_system_id = self.placeStoploss(trade.system_tradeID, opposite_dir, client, stop_loss)
         fill_price = 0
         while True:
             trade_model = TradeManager.get_trade(self.__class__.__name__, trade.system_tradeID)

@@ -24,6 +24,7 @@ from src.strategies.BaseStrategy import BaseStrategy
 from src.trademanager.Trade import Trade
 from src.trademanager.TradeManager import TradeManager
 from utils.Utils import Utils, interval_enum
+from utils.telegram import telegram
 
 
 class CurrencyStrategy_30(BaseStrategy):
@@ -99,9 +100,11 @@ class CurrencyStrategy_30(BaseStrategy):
                     job.join()
                 break
             elif ltp_price <= sell_low_range:
+                self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
                 for client_key in self.client_list:
-                    p = multiprocessing.Process(target=self.generateTrade, args=(client_key, sell_sl, sell_low_range,))
+                    p = multiprocessing.Process(target=self.generateTrade_sell,
+                                                args=(client_key, sell_sl, sell_low_range,))
                     jobs.append(p)
                     p.start()
                 for job in jobs:
@@ -112,126 +115,148 @@ class CurrencyStrategy_30(BaseStrategy):
     def get_ltp(self, token):
         return self.market_data.get_market_data(token).ltp_price
 
-    def generateTrade_buy(self, client, stoploss, price):
-        trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token, clientId=client,
-                      strategy_trade_id=self.client_list.get(client))
-        trade.exchange = self.exchange
-        trade.strategy = self.__class__.__name__
-        trade.instrument_type = Segment.CURRENCY
-        trade.create_trade_orderType_limit(Direction.BUY, self.quantity, price, Duration.DAY, self.productType,
-                                           stoploss)
-        orderId = self.placeTrade(trade, client)
-        # placing Stoploss
-        # sl_system_id = self.placeStoploss(trade.system_tradeID, opposite_dir, client, stoploss)
+    def generateTrade_buy(self, client, stop_loss, price):
+        try:
+            trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token, clientId=client,
+                          strategy_trade_id=self.client_list.get(client))
+            trade.exchange = self.exchange
+            trade.strategy = self.__class__.__name__
+            trade.instrument_type = Segment.CURRENCY
+            trade.create_trade_orderType_limit(Direction.BUY, self.quantity, price, Duration.DAY, self.productType,
+                                               stop_loss)
+            self.placeTrade(trade, client)
 
-        self.sleep_next_five_min()
+            start_time = self.next_five_min()
 
-        fill_price = 0
-        while True:
-            trade_model = TradeManager.get_trade(self.__class__.__name__, trade.system_tradeID)
-            if not trade_model:
-                continue
-            if trade_model.order_status == OrderStatus.COMPLETE:
-                fill_price = trade_model.price
-                break
-
-        target = fill_price + 10 * self.one_pip
-        sell_system_id = ''
-        remaining_qty = self.quantity
-        half_sell = False
-        sell_qty = 0
-        while True:
-            latest_ltp = self.get_ltp(self.token_detail.token)
-            sell_trade = False
-            if latest_ltp >= target and not half_sell:
-                sell_trade = True
-                sell_qty = self.quantity / 2
-                remaining_qty = remaining_qty - sell_qty
-                stoploss = fill_price
-            elif latest_ltp <= stoploss:
-                sell_trade = True
-                sell_qty = remaining_qty
-                remaining_qty = 0
-            elif datetime.now() > self.squareOffTimestamp:
-                sell_trade = True
-                sell_qty = remaining_qty
-                remaining_qty = 0
-            if sell_trade:
-                trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token,
-                              clientId=client,
-                              strategy_trade_id=self.client_list.get(client))
-                trade.strategy = self.__class__.__name__
-                trade.exchange = self.exchange
-                trade.instrument_type = Segment.CURRENCY
-                trade.create_trade_orderType_market(Direction.SELL, sell_qty, Duration.DAY, self.productType,
-                                                    stoploss)
-                orderId = self.placeTrade(trade, client)
-                sell_system_id = trade.system_tradeID
-                if remaining_qty != 0:
-                    half_sell = True
-                else:
+            fill_price = 0
+            while True:
+                trade_model = TradeManager.get_trade(self.__class__.__name__, trade.system_tradeID)
+                if not trade_model:
+                    continue
+                if trade_model.order_status == OrderStatus.COMPLETE:
+                    fill_price = trade_model.price
                     break
-            time.sleep(1)
 
-    def generateTrade_sell(self, client, stoploss, price):
-        trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token, clientId=client,
-                      strategy_trade_id=self.client_list.get(client))
-        trade.exchange = self.exchange
-        trade.strategy = self.__class__.__name__
-        trade.instrument_type = Segment.CURRENCY
-        trade.create_trade_orderType_limit(Direction.SELL, self.quantity, price, Duration.DAY, self.productType, stoploss)
-        orderId = self.placeTrade(trade, client)
-        # placing Stoploss
-        # sl_system_id = self.placeStoploss(trade.system_tradeID, opposite_dir, client, stoploss)
-
-        self.sleep_next_five_min()
-
-        fill_price = 0
-        while True:
-            trade_model = TradeManager.get_trade(self.__class__.__name__, trade.system_tradeID)
-            if not trade_model:
-                continue
-            if trade_model.order_status == OrderStatus.COMPLETE:
-                fill_price = trade_model.price
-                break
-
-        target = fill_price - 10 * self.one_pip
-        buy_system_id = ''
-        remaining_qty = self.quantity
-        half_buy = False
-        buy_qty = 0
-        while True:
-            latest_ltp = self.get_ltp(self.token_detail.token)
-            buy_trade = False
-            if latest_ltp <= target and not half_buy:
-                buy_trade = True
-                buy_qty = self.quantity / 2
-                remaining_qty = remaining_qty - buy_qty
-                stoploss = fill_price
-            elif latest_ltp >= stoploss:
-                buy_trade = True
-                buy_qty = remaining_qty
-                remaining_qty = 0
-            elif datetime.now() > self.squareOffTimestamp:
-                buy_trade = True
-                buy_qty = remaining_qty
-                remaining_qty = 0
-            if buy_trade:
-                trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token,
-                              clientId=client,
-                              strategy_trade_id=self.client_list.get(client))
-                trade.strategy = self.__class__.__name__
-                trade.exchange = self.exchange
-                trade.instrument_type = Segment.CURRENCY
-                trade.create_trade_orderType_market(Direction.BUY, buy_qty, Duration.DAY, self.productType,
-                                                    stoploss)
-                orderId = self.placeTrade(trade, client)
-                buy_system_id = trade.system_tradeID
-                if remaining_qty != 0:
-                    half_buy = True
+            target = fill_price + 10 * self.one_pip
+            remaining_qty = self.quantity
+            half_sell = False
+            sell_qty = 0
+            while True:
+                latest_ltp = self.get_ltp(self.token_detail.token)
+                sell_trade = False
+                if datetime.now() < start_time and not half_sell:
+                    if latest_ltp >= target:
+                        sell_trade = True
+                        sell_qty = self.quantity / 2
+                        remaining_qty = remaining_qty - sell_qty
+                        stop_loss = fill_price
                 else:
+                    if latest_ltp >= target and not half_sell:
+                        sell_trade = True
+                        sell_qty = self.quantity / 2
+                        remaining_qty = remaining_qty - sell_qty
+                        stop_loss = fill_price
+                    elif latest_ltp <= stop_loss:
+                        sell_trade = True
+                        sell_qty = remaining_qty
+                        remaining_qty = 0
+                    elif datetime.now() > self.squareOffTimestamp:
+                        sell_trade = True
+                        sell_qty = remaining_qty
+                        remaining_qty = 0
+                if sell_trade:
+                    trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token,
+                                  clientId=client,
+                                  strategy_trade_id=self.client_list.get(client))
+                    trade.strategy = self.__class__.__name__
+                    trade.exchange = self.exchange
+                    trade.instrument_type = Segment.CURRENCY
+                    trade.create_trade_orderType_market(Direction.SELL, sell_qty, Duration.DAY, self.productType,
+                                                        stop_loss)
+                    self.placeTrade(trade, client)
+                    if remaining_qty != 0:
+                        half_sell = True
+                    else:
+                        break
+                time.sleep(1)
+        except Exception as e:
+            errorString = 'Exception occurred while generating trade for buy CurrencyStrategy_30 for client {client} , ---  {error}'.format(
+                client=str(client),
+                error=str(e))
+            logging.error(errorString)
+            telegram.send_text(errorString)
+
+    def generateTrade_sell(self, client, stop_loss, price):
+        try:
+            trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token, clientId=client,
+                          strategy_trade_id=self.client_list.get(client))
+            trade.exchange = self.exchange
+            trade.strategy = self.__class__.__name__
+            trade.instrument_type = Segment.CURRENCY
+            trade.create_trade_orderType_limit(Direction.SELL, self.quantity, price, Duration.DAY, self.productType,
+                                               stop_loss)
+            self.placeTrade(trade, client)
+
+            start_time = self.next_five_min()
+
+            fill_price = 0
+            while True:
+                trade_model = TradeManager.get_trade(self.__class__.__name__, trade.system_tradeID)
+                if not trade_model:
+                    continue
+                if trade_model.order_status == OrderStatus.COMPLETE:
+                    fill_price = trade_model.price
                     break
-            time.sleep(1)
+
+            target = fill_price - 10 * self.one_pip
+
+            remaining_qty = self.quantity
+            half_buy = False
+            buy_qty = 0
+            while True:
+                latest_ltp = self.get_ltp(self.token_detail.token)
+                buy_trade = False
+                if datetime.now() < start_time and not half_buy:
+                    if latest_ltp <= target:
+                        buy_trade = True
+                        buy_qty = self.quantity / 2
+                        remaining_qty = remaining_qty - buy_qty
+                        stop_loss = fill_price
+                else:
+                    if latest_ltp <= target and not half_buy:
+                        buy_trade = True
+                        buy_qty = self.quantity / 2
+                        remaining_qty = remaining_qty - buy_qty
+                        stop_loss = fill_price
+                    elif latest_ltp >= stop_loss:
+                        buy_trade = True
+                        buy_qty = remaining_qty
+                        remaining_qty = 0
+                    elif datetime.now() > self.squareOffTimestamp:
+                        buy_trade = True
+                        buy_qty = remaining_qty
+                        remaining_qty = 0
+                if buy_trade:
+                    trade = Trade(tradingSymbol=self.token_detail.symbol, symbolToken=self.token_detail.token,
+                                  clientId=client,
+                                  strategy_trade_id=self.client_list.get(client))
+                    trade.strategy = self.__class__.__name__
+                    trade.exchange = self.exchange
+                    trade.instrument_type = Segment.CURRENCY
+                    trade.create_trade_orderType_market(Direction.BUY, buy_qty, Duration.DAY, self.productType,
+                                                        stop_loss)
+                    self.placeTrade(trade, client)
+                    if remaining_qty != 0:
+                        half_buy = True
+                    else:
+                        break
+                time.sleep(1)
+        except Exception as e:
+            errorString = 'Exception occurred while generating trade for sell CurrencyStrategy_30 for client {client} , ---  {error}'.format(
+                client=str(client),
+                error=str(e))
+            logging.error(errorString)
+            telegram.send_text(errorString)
 
     def placeTrade(self, trade, client):
         trade_df = self.trade_dataframe.loc[client]
@@ -250,12 +275,10 @@ class CurrencyStrategy_30(BaseStrategy):
         else:
             return self.trade_manager.incubate_trade(trade)
 
-    def sleep_next_five_min(self):
+    def next_five_min(self):
         now = datetime.now()
         newtime = now.replace(minute=int(now.minute / 5) * 5, second=0, microsecond=0) + timedelta(minutes=5)
-        waitSeconds = Utils.getEpoch(newtime) - Utils.getEpoch(now)
-        if waitSeconds > 0:
-            time.sleep(waitSeconds)
+        return newtime
 
     def sleep_next_fifteen_min(self):
         now = datetime.now()
