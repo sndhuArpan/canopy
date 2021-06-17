@@ -21,7 +21,7 @@ class trade_status_model:
         self.price = ''
         self.qty = ''
         self.fill_qty = ''
-        self.stoploss = ''
+        self.stop_loss = ''
         self.fill_time = ''
         self.instrument_type = ''
 
@@ -45,7 +45,7 @@ class trade_status_model:
         if kwargs.get('qty'):
             self.qty = kwargs.get('qty')
         if kwargs.get('stop_loss'):
-            self.stoploss = kwargs.get('stop_loss')
+            self.stop_loss = kwargs.get('stop_loss')
         if kwargs.get('instrument_type'):
             self.instrument_type = kwargs.get('instrument_type')
 
@@ -92,7 +92,7 @@ class canopy_db:
                                                          transaction_type=model.transaction_type,
                                                          share_name=model.share_name,
                                                          qty=model.qty,
-                                                         stoploss=model.stoploss,
+                                                         stop_loss=model.stop_loss,
                                                          instrument_type=model.instrument_type)
         self.conn.execute(query)
         self.conn.commit()
@@ -131,7 +131,7 @@ class canopy_db:
         self.conn.commit()
 
     def __select_columns(self):
-        return ' client_id,order_id,system_trade_id,strategy_trade_id,order_type,order_status,transaction_type,share_name,qty,fill_qty,stop_loss,fill_time '
+        return ' client_id,order_id,system_trade_id,strategy_trade_id,order_type,order_status,transaction_type,share_name,qty,fill_qty,stop_loss,fill_time,price '
 
     def __convert_row_model_list(self, cursor, strategy_name):
         model_list = []
@@ -147,8 +147,9 @@ class canopy_db:
             model.share_name = row[7]
             model.qty = row[8]
             model.fill_qty = row[9]
-            model.stoploss = row[10]
+            model.stop_loss = row[10]
             model.fill_time = row[11]
+            model.price = row[12]
             model_list.append(model)
         return model_list
 
@@ -166,8 +167,9 @@ class canopy_db:
             model.share_name = row[7]
             model.qty = row[8]
             model.fill_qty = row[9]
-            model.stoploss = row[10]
+            model.stop_loss = row[10]
             model.fill_time = row[11]
+            model.price = row[12]
             model_list.append(model)
         if model_list:
             return model_list[0]
@@ -244,6 +246,8 @@ class canopy_db:
             delete_query = 'delete from ' + strategy_name + '_Daily_Status'
             self.conn.execute(delete_query)
             self.conn.commit()
+
+
 
 
 

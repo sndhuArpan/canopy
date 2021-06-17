@@ -3,6 +3,7 @@ import threading
 import time
 
 from src.strategies.CurrencyStrategy import CurrencyStrategy
+from src.strategies.CurrencyStrategy_30 import CurrencyStrategy_30
 from src.strategies.SampleStrategy import SampleStrategy
 from src.DB.static_db.TickerDetails import TickerDetails
 
@@ -35,7 +36,7 @@ class Algo:
         # start running strategies: Run each strategy in a separate thread
         # threading.Thread(target=SampleStrategy.getInstance().run).start()
         # threading.Thread(target=BNFORB30Min.getInstance().run).start()
-        threading.Thread(target=CurrencyStrategy.getInstance().run).start()
+        threading.Thread(target=CurrencyStrategy_30.getInstance().run).start()
         # threading.Thread(target=TradeManager.update_trade_status).start()
 
         Algo.isAlgoRunning = True

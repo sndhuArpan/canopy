@@ -108,7 +108,8 @@ class TradeManager:
                 client_list = sql.select_distinct_client_id(strategy_name)
                 for client in client_list:
                     order_book_dict = {}
-                    orders_list = sql.select_daily_entry_client_id_order_status(client, strategy_name, order_status_list)
+                    orders_list = sql.select_daily_entry_client_id_order_status(client, strategy_name,
+                                                                                order_status_list)
                     connect = TradeManager.getClientConnect(client)
                     order_data = connect.orderBook().__getitem__('data')
                     if order_data:
@@ -128,8 +129,8 @@ class TradeManager:
             logging.error('Order Status update Failed %s', str(e))
             telegram.send_text(str(e))
 
-
-    def get_trade(self, strategy, system_tradeID):
+    @staticmethod
+    def get_trade(strategy, system_tradeID):
         sql = canopy_db()
         return sql.select_daily_entry_system_trade_id(system_tradeID, strategy)
 
@@ -138,20 +139,22 @@ class TradeManager:
             return None
         logging.info('TradeManager: addNewTrade called for %s', trade)
         sql = canopy_db()
-        model = trade_status_model(trade.strategy).initialize_values(client_id=trade.clientId,
-                                                                     strategy_trade_id=trade.strategy_trade_id,
-                                                                     system_trade_id=trade.system_tradeID,
-                                                                     order_type=trade.orderType,
-                                                                     order_status=OrderStatus.COMPLETE,
-                                                                     transaction_type=trade.direction,
-                                                                     share_name=trade.tradingSymbol,
-                                                                     qty=trade.qty,
-                                                                     stoploss=trade.stopLoss,
-                                                                     price=trade.requestedEntry,
-                                                                     instrument_type=trade.instrument_type)
+        model = trade_status_model(trade.strategy)
+        model.initialize_values(client_id=trade.clientId,
+                                strategy_trade_id=trade.strategy_trade_id,
+                                system_trade_id=trade.system_tradeID,
+                                order_type=trade.orderType,
+                                order_status=OrderStatus.COMPLETE,
+                                transaction_type=trade.direction,
+                                share_name=trade.tradingSymbol,
+                                qty=trade.qty,
+                                stop_loss=trade.stop_loss,
+                                instrument_type=trade.instrument_type)
+        sql.insert_strategy_daily(model)
         model.order_id = str(uuid.uuid1().node)
         model.fill_qty = trade.qty
+        model.price = trade.requestedEntry
         model.fill_time = str(datetime.now())
-        sql.insert_strategy_daily(model)
+        sql.update_daily_entry_filled(model)
         logging.info('TradeManager: trade %s added successfully to the list', trade.system_tradeID)
         return model.order_id

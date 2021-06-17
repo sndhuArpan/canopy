@@ -24,7 +24,7 @@ class Trade:
         self.instrument_type = ''
         self.requestedEntry = 0  # Requested entry
         self.qty = 0  # Requested quantity
-        self.stopLoss = 0
+        self.stop_loss = 0
         self.tradeState = TradeState.CREATED
         self.stopLoss_trigger_price = 0
 
@@ -32,7 +32,7 @@ class Trade:
         self.orderType = OrderType.MARKET
         self.direction = direction
         self.qty = quantity
-        self.stopLoss = stoploss
+        self.stop_loss = stoploss
         self.duration = duration
         self.productType = productType
         self.variety = Variety.NORMAL
@@ -41,7 +41,7 @@ class Trade:
         self.orderType = OrderType.LIMIT
         self.direction = direction
         self.qty = quantity
-        self.stopLoss = stoploss
+        self.stop_loss = stoploss
         self.duration = duration
         self.productType = productType
         self.requestedEntry = entry_price
@@ -54,7 +54,7 @@ class Trade:
         self.duration = duration
         self.productType = productType
         self.stopLoss_trigger_price = trigger_price
-        self.stopLoss = stoploss
+        self.stop_loss = stoploss
         self.variety = Variety.STOPLOSS
 
     def create_trade_orderType_stoploss_market(self, direction, quantity, trigger_price, duration, productType):

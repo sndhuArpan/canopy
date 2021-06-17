@@ -1,9 +1,10 @@
 import json
 import logging
 import os
+import threading
 import uuid
 import time
-import multiprocessing
+import traceback
 import pandas as pd
 
 from datetime import datetime, timedelta
@@ -53,7 +54,7 @@ class CurrencyStrategy_30(BaseStrategy):
         self.client_list = {}
 
         self.trade_dataframe = pd.DataFrame(columns=['client', 'buy_trade', 'sell_trade', 'sl_trade'])
-        self.trade_manager = TradeManager()
+
         for client in ClientStrategyInfo().get_client_by_strategy(self.__class__.__name__):
             self.client_list[client] = uuid.uuid1()
             self.trade_dataframe = self.trade_dataframe.append({'client': client, 'buy_trade': 0,
@@ -71,11 +72,11 @@ class CurrencyStrategy_30(BaseStrategy):
 
     def process(self):
         self.one_pip = 0.0025
-        data= self.market_data.get_ltp_data(self.exchange, self.token_detail.symbol, self.token_detail.token)
+        data = self.market_data.get_ltp_data(self.exchange, self.token_detail.symbol, self.token_detail.token)
         high_range = data['high']
         low_range = data['low']
         buy_high_range = high_range + self.one_pip
-        buy_sl = high_range - 5 * self.one_pip
+        buy_sl = self.get_latest_price_websocket(self.token_detail.token) - 5 * self.one_pip
         sell_low_range = low_range - self.one_pip
         sell_sl = low_range + 5 * self.one_pip
         while True:
@@ -86,25 +87,34 @@ class CurrencyStrategy_30(BaseStrategy):
                 self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
                 for client_key in self.client_list:
-                    p = multiprocessing.Process(target=self.generateTrade_buy,
-                                                args=(client_key, buy_sl, buy_high_range,))
+                    p = threading.Thread(target=self.generateTrade_buy,
+                                         args=(client_key, buy_sl, buy_high_range,))
                     jobs.append(p)
-                    p.start()
+
+                for job in jobs:
+                    job.start()
+
                 for job in jobs:
                     job.join()
+                print('done')
                 break
             elif ltp_price <= sell_low_range:
-                self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
+                self.squareOffTimestamp = datetime.now() + timedelta(minutes=10)
                 jobs = []
                 for client_key in self.client_list:
-                    p = multiprocessing.Process(target=self.generateTrade_sell,
-                                                args=(client_key, sell_sl, sell_low_range,))
+                    p = threading.Thread(target=self.generateTrade_sell,
+                                         args=(client_key, sell_sl, sell_low_range,))
                     jobs.append(p)
-                    p.start()
+
+                for job in jobs:
+                    job.start()
+
                 for job in jobs:
                     job.join()
                 break
             time.sleep(1)
+
+        print('done')
 
     def get_latest_price_websocket(self, token):
         return self.market_data.get_market_data(token).ltp_price
@@ -128,7 +138,7 @@ class CurrencyStrategy_30(BaseStrategy):
                 if not trade_model:
                     continue
                 if trade_model.order_status == OrderStatus.COMPLETE:
-                    fill_price = trade_model.price
+                    fill_price = float(trade_model.price)
                     break
 
             target = fill_price + 10 * self.one_pip
@@ -138,8 +148,8 @@ class CurrencyStrategy_30(BaseStrategy):
             while True:
                 latest_ltp = self.get_latest_price_websocket(self.token_detail.token)
                 sell_trade = False
-                if datetime.now() < start_time and not half_sell:
-                    if latest_ltp >= target:
+                if datetime.now() < start_time:
+                    if latest_ltp >= target and not half_sell:
                         sell_trade = True
                         sell_qty = self.quantity / 2
                         remaining_qty = remaining_qty - sell_qty
@@ -173,10 +183,11 @@ class CurrencyStrategy_30(BaseStrategy):
                     else:
                         break
                 time.sleep(1)
-        except Exception as e:
+
+        except:
             errorString = 'Exception occurred while generating trade for buy CurrencyStrategy_30 for client {client} , ---  {error}'.format(
                 client=str(client),
-                error=str(e))
+                error=str(traceback.print_exc()))
             logging.error(errorString)
             telegram.send_text(errorString)
 
@@ -199,7 +210,7 @@ class CurrencyStrategy_30(BaseStrategy):
                 if not trade_model:
                     continue
                 if trade_model.order_status == OrderStatus.COMPLETE:
-                    fill_price = trade_model.price
+                    fill_price = float(trade_model.price)
                     break
 
             target = fill_price - 10 * self.one_pip
@@ -210,8 +221,8 @@ class CurrencyStrategy_30(BaseStrategy):
             while True:
                 latest_ltp = self.get_latest_price_websocket(self.token_detail.token)
                 buy_trade = False
-                if datetime.now() < start_time and not half_buy:
-                    if latest_ltp <= target:
+                if datetime.now() < start_time:
+                    if latest_ltp <= target and not half_buy:
                         buy_trade = True
                         buy_qty = self.quantity / 2
                         remaining_qty = remaining_qty - buy_qty
@@ -245,10 +256,10 @@ class CurrencyStrategy_30(BaseStrategy):
                     else:
                         break
                 time.sleep(1)
-        except Exception as e:
+        except:
             errorString = 'Exception occurred while generating trade for sell CurrencyStrategy_30 for client {client} , ---  {error}'.format(
                 client=str(client),
-                error=str(e))
+                error=str(traceback.print_exc()))
             logging.error(errorString)
             telegram.send_text(errorString)
 
@@ -265,9 +276,11 @@ class CurrencyStrategy_30(BaseStrategy):
             else:
                 trade_df['sell_trade'] = trade_df['sell_trade'] + 1
         if not self.incubation:
-            return self.trade_manager.addNewTrade(trade)
+            return TradeManager().addNewTrade(trade)
         else:
-            return self.trade_manager.incubate_trade(trade)
+            latest_ltp = self.get_latest_price_websocket(self.token_detail.token)
+            trade.requestedEntry = latest_ltp
+            return TradeManager().incubate_trade(trade)
 
     def next_five_min(self):
         now = datetime.now()

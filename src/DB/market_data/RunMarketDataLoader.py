@@ -7,6 +7,8 @@ import traceback
 sys.path.append('/home/ec2-user/canopy/canopy')
 sys.path.append('/Users/Sandhu/canopy/canopy/')
 sys.path.append('/Users/Sandhu/canopy/canopy/src')
+sys.path.append('/Users/arpanjeetsandhu/canopy/')
+sys.path.append('/Users/arpanjeetsandhu/canopy/src')
 
 from Logging.Logger import GetLogger
 from src.DB.market_data.MarketDataWebSocket import MarketDataWebsocket

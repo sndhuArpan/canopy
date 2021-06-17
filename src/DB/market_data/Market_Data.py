@@ -37,7 +37,7 @@ class MarketData:
     def __init__(self):
         get_file_dir = os.path.dirname(__file__)
         db_file = os.path.join(get_file_dir, 'market_data.db')
-        self.conn = sqlite3.connect(db_file)
+        self.conn = sqlite3.connect(db_file, check_same_thread=False)
 
     def create_ticker_message_table(self):
         create_table = 'Create table ticker_message ' + '''(time varchar2(20),
@@ -138,7 +138,7 @@ class MarketData:
         return model
 
     def get_market_data(self, token):
-        select_query = 'select ' + self.__select_columns() + ' from ticker_message where token ={token}'
+        select_query = 'select ' + self.__select_columns() + ' from market_data where token ={token}'
         cursor = self.conn.execute(select_query.format(token=token))
         return self.__convert_row_model(cursor)
 
