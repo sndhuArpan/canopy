@@ -10,7 +10,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from src.DB.market_data.Market_Data import MarketData, LtpPriceModel
-from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 from src.DB.static_db.TickerDetails import TickerDetails
 from src.DB.static_db.ClientStrategyInfo import ClientStrategyInfo
 from src.models.Direction import Direction
@@ -22,7 +21,7 @@ from src.models.Segment import Segment
 from src.strategies.BaseStrategy import BaseStrategy
 from src.trademanager.Trade import Trade
 from src.trademanager.TradeManager import TradeManager
-from utils.Utils import Utils, interval_enum
+from utils.Utils import Utils
 from utils.telegram import telegram
 
 
@@ -36,7 +35,7 @@ class CurrencyStrategy_30(BaseStrategy):
         return CurrencyStrategy_30.__instance
 
     def __init__(self):
-        if CurrencyStrategy_30.__instance != None:
+        if CurrencyStrategy_30.__instance is not None:
             raise Exception("This class is a singleton!")
         else:
             CurrencyStrategy_30.__instance = self
@@ -52,7 +51,7 @@ class CurrencyStrategy_30(BaseStrategy):
         self.quantity = 20
         self.symbol_token_dict = {}
         self.client_list = {}
-
+        self.one_pip = 0.0025
         self.trade_dataframe = pd.DataFrame(columns=['client', 'buy_trade', 'sell_trade', 'sl_trade'])
 
         for client in ClientStrategyInfo().get_client_by_strategy(self.__class__.__name__):
@@ -64,26 +63,38 @@ class CurrencyStrategy_30(BaseStrategy):
         self.trade_dataframe.index = self.trade_dataframe['client']
         self.max_sl_call = 2
         self.token_detail = TickerDetails().get_future_token(self.exchange, 'USDINR')
-        # market db object
+
         self.market_data = MarketData()
-        # Register Symbols
+
         ltp_model = LtpPriceModel().initialize(self.token_detail.token, self.token_detail.exch_seg)
         self.market_data.register_token(ltp_model)
 
     def process(self):
-        self.one_pip = 0.0025
         data = self.market_data.get_ltp_data(self.exchange, self.token_detail.symbol, self.token_detail.token)
-        high_range = data['high']
-        low_range = data['low']
+        high_range = float(data['high'])
+        low_range = float(data['low'])
+        close = float(data['ltp'])
+        open = float(data['open'])
         buy_high_range = high_range + self.one_pip
-        buy_sl = self.get_latest_price_websocket(self.token_detail.token) - 5 * self.one_pip
+        buy_sl = high_range - 5 * self.one_pip
         sell_low_range = low_range - self.one_pip
         sell_sl = low_range + 5 * self.one_pip
+        only_buy = False
+        only_sell = False
+
+        if abs(open - close)/self.one_pip < 7:
+            return
+        else:
+            if open > close:
+                only_sell = True
+            else:
+                only_buy = True
+
         while True:
             if datetime.now() > self.stopTimestamp:
                 break
             ltp_price = self.get_latest_price_websocket(self.token_detail.token)
-            if ltp_price >= buy_high_range:
+            if ltp_price >= buy_high_range and only_buy:
                 self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
                 for client_key in self.client_list:
@@ -98,8 +109,8 @@ class CurrencyStrategy_30(BaseStrategy):
                     job.join()
                 print('done')
                 break
-            elif ltp_price <= sell_low_range:
-                self.squareOffTimestamp = datetime.now() + timedelta(minutes=10)
+            elif ltp_price <= sell_low_range and only_sell:
+                self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
                 for client_key in self.client_list:
                     p = threading.Thread(target=self.generateTrade_sell,
@@ -114,7 +125,7 @@ class CurrencyStrategy_30(BaseStrategy):
                 break
             time.sleep(1)
 
-        print('done')
+        self.market_data.deregister_token(self.token_detail.token)
 
     def get_latest_price_websocket(self, token):
         return self.market_data.get_market_data(token).ltp_price
@@ -284,12 +295,5 @@ class CurrencyStrategy_30(BaseStrategy):
 
     def next_five_min(self):
         now = datetime.now()
-        newtime = now.replace(minute=int(now.minute / 5) * 5, second=0, microsecond=0) + timedelta(minutes=5)
-        return newtime
+        return now.replace(minute=int(now.minute / 5) * 5, second=0, microsecond=0) + timedelta(minutes=5)
 
-    def sleep_next_fifteen_min(self):
-        now = datetime.now()
-        newtime = now.replace(minute=int(now.minute / 15) * 15, second=0, microsecond=0) + timedelta(minutes=15)
-        waitSeconds = Utils.getEpoch(newtime) - Utils.getEpoch(now)
-        if waitSeconds > 0:
-            time.sleep(waitSeconds)

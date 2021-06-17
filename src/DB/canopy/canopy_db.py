@@ -229,19 +229,20 @@ class canopy_db:
         select_query = 'select * from ' + strategy_name + '_Daily_Status'
         cursor = self.conn.execute(select_query)
         df = DataFrame(cursor.fetchall())
+        if df.empty:
+            return
         columns_list = []
         for i in cursor.description:
             columns_list.append(i[0])
         df.columns = columns_list
-        # df = df.loc[df['order_status'] == 'complete']
+        df = df.loc[df['order_status'] == 'complete']
         get_file_dir = os.path.dirname(__file__)
         csv_file_path = os.path.join(get_file_dir, strategy_name+'_trades.csv')
         if os.path.exists(csv_file_path):
             df.to_csv(csv_file_path, mode='a', header=False)
         else:
             df.to_csv(csv_file_path)
-        csv_file = open(csv_file_path, 'rb')
-        telegram.send_file(csv_file)
+        telegram.send_file(csv_file_path)
         if delete:
             delete_query = 'delete from ' + strategy_name + '_Daily_Status'
             self.conn.execute(delete_query)

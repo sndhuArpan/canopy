@@ -51,62 +51,15 @@ class BaseStrategy:
         return True
 
     def run(self):
-        # NOTE: This should not be overriden in Derived class
-        # if self.enabled == False:
-        #     logging.warning("%s: Not going to run strategy as its not enabled.", self.getName())
-        #     return
-
-        # if Utils.isMarketClosedForTheDay():
-        #     logging.warning("%s: Not going to run strategy as market is closed.", self.getName())
-        #     return
-        #
         now = datetime.now()
-        # if now < Utils.getMarketStartTime():
-        #     Utils.waitTillMarketOpens(self.getName())
-        #
-        # if self.canTradeToday() == False:
-        #     logging.warning("%s: Not going to run strategy as it cannot be traded today.", self.getName())
-        #     return
-        #
-        # if now < self.startTimestamp:
-        #     waitSeconds = Utils.getEpoch(self.startTimestamp) - Utils.getEpoch(now)
-        #     logging.info("%s: Waiting for %d seconds till startegy start timestamp reaches...", self.getName(),
-        #                  waitSeconds)
-        #     if waitSeconds > 0:
-        #         time.sleep(waitSeconds)
-        while True:
-            # if Utils.isMarketClosedForTheDay():
-            #     logging.warning("%s: Exiting the strategy as market closed.", self.getName())
-            #     break
+        if now < self.startTimestamp:
+            waitSeconds = Utils.getEpoch(self.startTimestamp) - Utils.getEpoch(now)
+            logging.info("%s: Waiting for %d seconds till startegy start timestamp reaches...", self.getName(),
+                         waitSeconds)
+            if waitSeconds > 0:
+                time.sleep(waitSeconds)
 
-            # Derived class specific implementation will be called when process() is called
-
-            self.process()
-            break
-
-
-    def shouldPlaceTrade(self, trade, tick):
-        # Each strategy should call this function from its own shouldPlaceTrade() method before working on its own logic
-        # if trade == None:
-        #     return False
-        # if trade.qty == 0:
-        #     TradeManager.disableTrade(trade, 'InvalidQuantity')
-        #     return False
-        #
-        # now = datetime.now()
-        # if now > self.stopTimestamp:
-        #     TradeManager.disableTrade(trade, 'NoNewTradesCutOffTimeReached')
-        #     return False
-        #
-        # numOfTradesPlaced = TradeManager.getNumberOfTradesPlacedByStrategy(self.getName())
-        # if numOfTradesPlaced >= self.maxTradesPerDay:
-        #     TradeManager.disableTrade(trade, 'MaxTradesPerDayReached')
-        #     return False
-
-        return True
-
-    def getQuote(self, tradingSymbol, exchange):
-        return AngelSymbol.get_symbol_token(exchange, tradingSymbol)
+        self.process()
 
     def placeTrade(self, trade):
         pass
