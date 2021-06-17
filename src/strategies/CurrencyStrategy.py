@@ -10,7 +10,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from Data_Wrappers.Indicators.EMA import EMA
-from Data_Wrappers.Indicators.RSI import RSI
 from src.DB.market_data.Market_Data import MarketData, LtpPriceModel
 from src.DB.static_db.TickerDetails import TickerDetails
 from src.models.Direction import Direction
@@ -156,7 +155,7 @@ class CurrencyStrategy(BaseStrategy):
     def get_candledata_indicator(self):
         ema_small = EMA(interval=23, on='close')
         ema_large = EMA(interval=53, on='close')
-        rsi_14 = RSI(on='close')
+        rsi_14 = None #RSI(on='close')
         data = self.market_data.get_candle_data(interval=interval_enum.FIFTEEN_MINUTE, candles=60,
                                                 share_symbol='3273', exchange='NSE')
         data = ema_small.cal_indicator(data=data)

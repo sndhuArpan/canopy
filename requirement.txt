@@ -8,6 +8,5 @@ autobahn
 service-identity
 websockets
 cryptography
-telegram
-telebot
-telethon
+pandas-ta
+python-telegram-bot
