@@ -1,7 +1,9 @@
-import logging
 import threading
-import time
+from datetime import datetime
+import os
+import pathlib
 
+from Logging.Logger import GetLogger
 from src.DB.canopy.canopy_db import canopy_db
 from src.strategies.CurrencyStrategy import CurrencyStrategy
 from src.strategies.CurrencyStrategy_30 import CurrencyStrategy_30
@@ -13,12 +15,20 @@ class Algo:
 
     @staticmethod
     def startAlgo():
+
+        # Creating Logging
+        logger_dir = os.path.join(pathlib.Path(__file__).parents[1], 'Log/Algo')
+        date_str = datetime.now().strftime("%d%m%Y")
+        log_file_name = 'Algo_' + date_str + '.log'
+        log_file = os.path.join(logger_dir, log_file_name)
+        logger = GetLogger(log_file).get_logger()
+
         # if Utils.isMarketClosedForTheDay():
         #     logging.warning("%s: Not going to run strategy as market is closed.", self.getName())
         #     return
         #
         TickerDetails().load_data_into_symbol_token_map()
-        logging.info("Starting Algo...")
+        logger.info("Starting Algo...")
 
         all_strategies_job = []
         all_strategies_name = []
@@ -39,4 +49,4 @@ class Algo:
         for strategy_name in all_strategies_name:
             canopy_sql.create_csv(strategy_name=strategy_name, delete=True)
 
-        logging.info("Algo started.")
+        logger.info("Algo started.")
