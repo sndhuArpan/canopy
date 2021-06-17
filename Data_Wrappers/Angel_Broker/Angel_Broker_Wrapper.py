@@ -3,7 +3,7 @@ from smartapi import SmartConnect
 import enum
 from datetime import datetime, timedelta
 import pandas as pd
-from Util import Util, interval_enum
+from utils.Utils import Utils, interval_enum
 import time
 import requests as request
 import csv

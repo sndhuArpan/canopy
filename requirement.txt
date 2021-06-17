@@ -9,4 +9,6 @@ service-identity
 websockets
 cryptography
 pandas-ta
+smartapi-python
+websocket-client
 python-telegram-bot
