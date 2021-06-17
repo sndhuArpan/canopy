@@ -33,6 +33,7 @@ class MarketDataWebsocket:
     def on_tick(self, ws, tick):
         token_str = self.market_data_db_obj.get_register_token_string()
         if token_str != self.token:
+            self.logger.info('Updating Ticker : %s' % token_str)
             self.token = token_str
             self.ss.send_request(self.token, self.task)
         for bTick in tick:
