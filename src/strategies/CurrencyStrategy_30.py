@@ -1,14 +1,14 @@
-import json
-import logging
 import os
 import threading
 import uuid
 import time
 import traceback
 import pandas as pd
+import pathlib
 
 from datetime import datetime, timedelta
 
+from Logging.Logger import GetLogger
 from src.DB.market_data.Market_Data import MarketData, LtpPriceModel
 from src.DB.static_db.TickerDetails import TickerDetails
 from src.DB.static_db.ClientStrategyInfo import ClientStrategyInfo
@@ -42,6 +42,13 @@ class CurrencyStrategy_30(BaseStrategy):
         # Call Base class constructor
         super().__init__("CurrencyStrategy_30")
         # Initialize all the properties specific to this strategy
+
+        logger_dir = os.path.join(pathlib.Path(__file__).parents[1], 'Log/CurrencyStrategy_30')
+        date_str = datetime.now().strftime("%d%m%Y")
+        log_file_name = 'CurrencyStrategy_30_' + date_str + '.log'
+        log_file = os.path.join(logger_dir, log_file_name)
+        self.logger = GetLogger(log_file).get_logger()
+
         self.productType = ProductType.NRML
         self.exchange = Exchange.CDS
         self.startTimestamp = Utils.getTimeOfToDay(9, 30, 0)
@@ -70,6 +77,8 @@ class CurrencyStrategy_30(BaseStrategy):
         self.market_data.register_token(ltp_model)
 
     def process(self):
+        self.logger.info('In process method of CurrencyStrategy_30')
+
         data = self.market_data.get_ltp_data(self.exchange, self.token_detail.symbol, self.token_detail.token)
         high_range = float(data['high'])
         low_range = float(data['low'])
@@ -90,10 +99,20 @@ class CurrencyStrategy_30(BaseStrategy):
             else:
                 only_buy = True
 
+        info_String = 'open - {open}, close - {close}, buy_high_range - {buy_high_range}, ' \
+                      'sell_low_range - {sell_low_range}'.format(open=open,
+                                                                 close=close,
+                                                                 buy_high_range=buy_high_range,
+                                                                 sell_low_range=sell_low_range)
+        self.logger.info(info_String)
+
         while True:
             if datetime.now() > self.stopTimestamp:
                 break
             ltp_price = self.get_latest_price_websocket(self.token_detail.token)
+            if ltp_price is None:
+                self.logger.error('ltp_price is none')
+                break
             if ltp_price >= buy_high_range and only_buy:
                 self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
@@ -107,7 +126,7 @@ class CurrencyStrategy_30(BaseStrategy):
 
                 for job in jobs:
                     job.join()
-                print('done')
+
                 break
             elif ltp_price <= sell_low_range and only_sell:
                 self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
@@ -125,6 +144,7 @@ class CurrencyStrategy_30(BaseStrategy):
                 break
             time.sleep(1)
 
+        self.logger.info('CurrencyStrategy_30 task completed for today')
         self.market_data.deregister_token(self.token_detail.token)
 
     def get_latest_price_websocket(self, token):
@@ -151,6 +171,8 @@ class CurrencyStrategy_30(BaseStrategy):
                 if trade_model.order_status == OrderStatus.COMPLETE:
                     fill_price = float(trade_model.price)
                     break
+
+            self.logger.info(f'{self.quantity} USDINR bought at price {fill_price} for client {client}')
 
             target = fill_price + 10 * self.one_pip
             remaining_qty = self.quantity
@@ -189,6 +211,9 @@ class CurrencyStrategy_30(BaseStrategy):
                     trade.create_trade_orderType_market(Direction.SELL, sell_qty, Duration.DAY, self.productType,
                                                         stop_loss)
                     self.placeTrade(trade, client)
+
+                    self.logger.info(f'{sell_qty} USDINR sold at market price for client {client}')
+
                     if remaining_qty != 0:
                         half_sell = True
                     else:
@@ -199,7 +224,7 @@ class CurrencyStrategy_30(BaseStrategy):
             errorString = 'Exception occurred while generating trade for buy CurrencyStrategy_30 for client {client} , ---  {error}'.format(
                 client=str(client),
                 error=str(traceback.print_exc()))
-            logging.error(errorString)
+            self.logger.error(errorString)
             telegram.send_text(errorString)
 
     def generateTrade_sell(self, client, stop_loss, price):
@@ -223,6 +248,8 @@ class CurrencyStrategy_30(BaseStrategy):
                 if trade_model.order_status == OrderStatus.COMPLETE:
                     fill_price = float(trade_model.price)
                     break
+
+            self.logger.info(f'{self.quantity} USDINR sold at price {fill_price} for client {client}')
 
             target = fill_price - 10 * self.one_pip
 
@@ -262,6 +289,9 @@ class CurrencyStrategy_30(BaseStrategy):
                     trade.create_trade_orderType_market(Direction.BUY, buy_qty, Duration.DAY, self.productType,
                                                         stop_loss)
                     self.placeTrade(trade, client)
+
+                    self.logger.info(f'{buy_qty} USDINR bought at market price for client {client}')
+
                     if remaining_qty != 0:
                         half_buy = True
                     else:
@@ -271,7 +301,7 @@ class CurrencyStrategy_30(BaseStrategy):
             errorString = 'Exception occurred while generating trade for sell CurrencyStrategy_30 for client {client} , ---  {error}'.format(
                 client=str(client),
                 error=str(traceback.print_exc()))
-            logging.error(errorString)
+            self.logger.error(errorString)
             telegram.send_text(errorString)
 
     def placeTrade(self, trade, client):
