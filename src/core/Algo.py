@@ -5,9 +5,7 @@ import pathlib
 
 from Logging.Logger import GetLogger
 from src.DB.canopy.canopy_db import canopy_db
-from src.strategies.CurrencyStrategy import CurrencyStrategy
 from src.strategies.CurrencyStrategy_30 import CurrencyStrategy_30
-from src.strategies.SampleStrategy import SampleStrategy
 from src.DB.static_db.TickerDetails import TickerDetails
 
 
@@ -50,3 +48,6 @@ class Algo:
             canopy_sql.create_csv(strategy_name=strategy_name, delete=True)
 
         logger.info("Algo started.")
+
+if __name__ == '__main__':
+    Algo.startAlgo()
