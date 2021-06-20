@@ -16,8 +16,10 @@ class MarketDataWebsocket:
         self.connection_detail = BrokerAppDetails().get_brokerclientdetails(client_id)
         self.token = None
         self.task = "mw"
+        self.logger.info('MarketDataWebsocket object initiated')
 
     def start_ticker(self):
+        self.logger.info('MarketDataWebsocket: Starting ticker')
         self.market_data_db_obj = MarketData()
         self.token = self.market_data_db_obj.get_register_token_string()
         self.connect = SmartConnect(api_key=self.connection_detail.websocket_api_key)

@@ -36,7 +36,7 @@ class MarketData:
 
     def __init__(self):
         get_file_dir = os.path.dirname(__file__)
-        db_file = os.path.join(get_file_dir, 'market_data.db')
+        db_file = os.path.join(get_file_dir, '../../../db_files/market_data.db')
         self.conn = sqlite3.connect(db_file, check_same_thread=False)
 
     def create_ticker_message_table(self):

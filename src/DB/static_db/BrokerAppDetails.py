@@ -24,7 +24,7 @@ class BrokerAppDetails:
 
     def __init__(self):
         get_file_dir = os.path.dirname(__file__)
-        db_file = os.path.join(get_file_dir, 'static_db.db')
+        db_file = os.path.join(get_file_dir, '../../../db_files/static_db.db')
         self.conn = sqlite3.connect(db_file)
 
         encrypt_file = os.path.join(pathlib.Path(os.path.dirname(__file__)).parents[2], 'EncryptionKey.txt')

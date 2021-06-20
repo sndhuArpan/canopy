@@ -43,7 +43,7 @@ class CurrencyStrategy_30(BaseStrategy):
         super().__init__("CurrencyStrategy_30")
         # Initialize all the properties specific to this strategy
 
-        logger_dir = os.path.join(pathlib.Path(__file__).parents[1], 'Log/CurrencyStrategy_30')
+        logger_dir = os.path.join(pathlib.Path.home(), 'Log/CurrencyStrategy_30')
         date_str = datetime.now().strftime("%d%m%Y")
         log_file_name = 'CurrencyStrategy_30_' + date_str + '.log'
         log_file = os.path.join(logger_dir, log_file_name)

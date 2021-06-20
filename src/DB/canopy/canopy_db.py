@@ -1,6 +1,7 @@
 import csv
 import sqlite3
 import os
+import pathlib
 
 from pandas import DataFrame
 
@@ -54,7 +55,7 @@ class canopy_db:
 
     def __init__(self):
         get_file_dir = os.path.dirname(__file__)
-        db_file = os.path.join(get_file_dir, 'canopy.db')
+        db_file = os.path.join(get_file_dir, '../../../db_files/canopy.db')
         self.conn = sqlite3.connect(db_file)
 
     def create_table_daily(self, strategy_name):
@@ -236,7 +237,7 @@ class canopy_db:
             columns_list.append(i[0])
         df.columns = columns_list
         df = df.loc[df['order_status'] == 'complete']
-        get_file_dir = os.path.dirname(__file__)
+        get_file_dir = os.path.join(pathlib.Path.home(), 'trade_csv') #os.path.dirname(__file__)
         csv_file_path = os.path.join(get_file_dir, strategy_name+'_trades.csv')
         if os.path.exists(csv_file_path):
             df.to_csv(csv_file_path, mode='a', header=False)

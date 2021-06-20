@@ -15,7 +15,7 @@ class Algo:
     def startAlgo():
 
         # Creating Logging
-        logger_dir = os.path.join(pathlib.Path(__file__).parents[1], 'Log/Algo')
+        logger_dir = os.path.join(pathlib.Path.home(), 'Log/Algo')
         date_str = datetime.now().strftime("%d%m%Y")
         log_file_name = 'Algo_' + date_str + '.log'
         log_file = os.path.join(logger_dir, log_file_name)
