@@ -25,7 +25,10 @@ class Algo:
         #     logging.warning("%s: Not going to run strategy as market is closed.", self.getName())
         #     return
         #
+        logger.info("Loading symbols ....")
         TickerDetails().load_data_into_symbol_token_map()
+        logger.info("loading symbol completed.")
+
         logger.info("Starting Algo...")
 
         all_strategies_job = []
@@ -33,8 +36,11 @@ class Algo:
         # start running strategies: Run each strategy in a separate thread
         # threading.Thread(target=SampleStrategy.getInstance().run).start()
         # threading.Thread(target=BNFORB30Min.getInstance().run).start()
+
+        logger.info("Strategy CurrencyStrategy_30 run initiating")
         all_strategies_job.append(threading.Thread(target=CurrencyStrategy_30.getInstance().run))
         all_strategies_name.append('CurrencyStrategy_30')
+
         # threading.Thread(target=TradeManager.update_trade_status).start()
 
         for job in all_strategies_job:
@@ -42,12 +48,14 @@ class Algo:
         for job in all_strategies_job:
             job.join()
 
+        logger.info("Strategy Run completed for the day.")
+
         ### create daily csv and deleting all daily data
         canopy_sql = canopy_db()
         for strategy_name in all_strategies_name:
             canopy_sql.create_csv(strategy_name=strategy_name, delete=True)
 
-        logger.info("Algo started.")
+        logger.info("Algo completed for the day.")
 
 if __name__ == '__main__':
     Algo.startAlgo()

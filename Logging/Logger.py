@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 
 class GetLogger:
@@ -7,7 +8,10 @@ class GetLogger:
     def __init__(self, logger_file = None):
         self.log_file = logger_file
         # Create a custom logger
-        self.logger = logging.getLogger(__name__)
+        if logger_file is None:
+            self.logger = logging.getLogger(__name__)
+        else:
+            self.logger = logging.getLogger(Path(logger_file).stem)
 
         # Create handlers
         c_handler = logging.StreamHandler()

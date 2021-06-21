@@ -53,7 +53,7 @@ class CurrencyStrategy_30(BaseStrategy):
         self.exchange = Exchange.CDS
         self.startTimestamp = Utils.getTimeOfToDay(9, 30, 0)
         self.stopTimestamp = Utils.getTimeOfToDay(15, 30, 0)
-        self.squareOffTimestamp = Utils.getTimeOfToDay(12, 30, 0)
+        self.squareOffTimestamp = Utils.getTimeOfToDay(15, 30, 0)
 
         self.quantity = 20
         self.symbol_token_dict = {}
@@ -88,16 +88,16 @@ class CurrencyStrategy_30(BaseStrategy):
         buy_sl = high_range - 5 * self.one_pip
         sell_low_range = low_range - self.one_pip
         sell_sl = low_range + 5 * self.one_pip
-        only_buy = False
-        only_sell = False
-
-        if abs(open - close)/self.one_pip < 7:
-            return
-        else:
-            if open > close:
-                only_sell = True
-            else:
-                only_buy = True
+        # only_buy = False
+        # only_sell = False
+        #
+        # if abs(open - close)/self.one_pip < 7:
+        #     return
+        # else:
+        #     if open > close:
+        #         only_sell = True
+        #     else:
+        #         only_buy = True
 
         info_String = 'open - {open}, close - {close}, buy_high_range - {buy_high_range}, ' \
                       'sell_low_range - {sell_low_range}'.format(open=open,
@@ -113,7 +113,7 @@ class CurrencyStrategy_30(BaseStrategy):
             if ltp_price is None:
                 self.logger.error('ltp_price is none')
                 break
-            if ltp_price >= buy_high_range and only_buy:
+            if ltp_price >= buy_high_range :#and only_buy:
                 self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
                 for client_key in self.client_list:
@@ -128,7 +128,7 @@ class CurrencyStrategy_30(BaseStrategy):
                     job.join()
 
                 break
-            elif ltp_price <= sell_low_range and only_sell:
+            elif ltp_price <= sell_low_range: #and only_sell:
                 self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
                 jobs = []
                 for client_key in self.client_list:

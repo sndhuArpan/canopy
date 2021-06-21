@@ -11,7 +11,7 @@ bot = tele.Bot(token=token)
 class telegram:
     logger_dir = os.path.join(pathlib.Path.home(), 'Log/Telegram')
     date_str = datetime.datetime.now().strftime("%d%m%Y")
-    log_file_name = 'market_data_' + date_str + '.log'
+    log_file_name = 'Telegram_' + date_str + '.log'
     log_file = os.path.join(logger_dir, log_file_name)
     logger = GetLogger(log_file).get_logger()
 
