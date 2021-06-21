@@ -146,7 +146,7 @@ class Utils:
 
     @staticmethod
     def getMarketEndTime(dateTimeObj=None):
-        return Utils.getTimeOfDay(15, 30, 0, dateTimeObj)
+        return Utils.getTimeOfDay(17, 00, 0, dateTimeObj)
 
     @staticmethod
     def getTimeOfDay(hours, minutes, seconds, dateTimeObj=None):
@@ -187,13 +187,15 @@ class Utils:
         dayOfWeek = calendar.day_name[datetimeObj.weekday()]
         if dayOfWeek == 'Saturday' or dayOfWeek == 'Sunday':
             return True
-
-        dateStr = Utils.convertToDateStr(datetimeObj)
-        holidays = Utils.getHolidays()
-        if (dateStr in holidays):
-            return True
         else:
             return False
+
+        # dateStr = Utils.convertToDateStr(datetimeObj)
+        # holidays = Utils.getHolidays()
+        # if (dateStr in holidays):
+        #     return True
+        # else:
+        #     return False
 
     @staticmethod
     def isTodayHoliday():

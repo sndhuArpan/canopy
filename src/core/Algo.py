@@ -7,6 +7,7 @@ from Logging.Logger import GetLogger
 from src.DB.canopy.canopy_db import canopy_db
 from src.strategies.CurrencyStrategy_30 import CurrencyStrategy_30
 from src.DB.static_db.TickerDetails import TickerDetails
+from utils.Utils import Utils
 
 
 class Algo:
@@ -21,11 +22,17 @@ class Algo:
         log_file = os.path.join(logger_dir, log_file_name)
         logger = GetLogger(log_file).get_logger()
 
+
         # if Utils.isMarketClosedForTheDay():
         #     logging.warning("%s: Not going to run strategy as market is closed.", self.getName())
         #     return
         #
         logger.info("Loading symbols ....")
+
+        if Utils.isMarketClosedForTheDay():
+            logger.info("Not going to run strategy as market is closed.")
+            return
+
         TickerDetails().load_data_into_symbol_token_map()
         logger.info("loading symbol completed.")
 
