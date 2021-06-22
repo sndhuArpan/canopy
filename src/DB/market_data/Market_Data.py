@@ -1,9 +1,15 @@
+import math
 import sqlite3
 import os
-import datetime
+from datetime import datetime, timedelta
+import time
+import pandas as pd
+
+import numpy as np
 
 from src.DB.market_data.exchange_mapping import exchange_mapping
 from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
+from utils.Utils import Utils
 
 
 class LtpPriceModel:
@@ -199,6 +205,37 @@ class MarketData:
         connection = BrokerAppDetails().get_normal_connection('S705342')
         data = connection.ltpData(exchange, symbol, token).__getitem__('data')
         return data
+
+    def get_candle_data(self, **kwargs):
+        share_symbol = str(kwargs.get('share_symbol'))
+        number_of_candles = kwargs.get('candles')
+        interval = kwargs.get('interval')
+        exchange = kwargs.get('exchange')
+        if number_of_candles:
+            from_date = Utils.get_ist_from_date(datetime.today() - timedelta(days=number_of_candles)).strftime(
+                "%Y-%m-%d %H:%M")
+        else:
+            from_date = Utils.get_ist_from_date(datetime.today()).strftime("%Y-%m-%d %H:%M")
+        to_date = Utils.get_ist_to_date(datetime.today()).strftime("%Y-%m-%d %H:%M")
+
+        historicParam = {
+            "exchange": exchange,
+            "symboltoken": share_symbol,
+            "interval": interval.name,
+            "fromdate": from_date,
+            "todate": to_date
+        }
+        while True:
+            try:
+                data = BrokerAppDetails().get_normal_connection('S705342').getCandleData(historicParam).__getitem__("data")
+                break
+            except:
+                time.sleep(1)
+        if data:
+            data_df = pd.DataFrame(data, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
+            return data_df
+        else:
+            return pd.DataFrame()
 
 
 if __name__ == '__main__':

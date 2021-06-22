@@ -92,6 +92,14 @@ class TickerDetails:
         for row in cursor:
             return TickerDetails.return_ticker(row)
 
+    def get_all_stocks(self, exchange):
+        select_query = 'SELECT token, symbol, name, expiry, strike, lotsize, instrumenttype, exch_seg, tick_size from symbol_token_{exchange}_map'
+        cursor = self.conn.execute(select_query.format(exchange=exchange.lower()))
+        all_stocks = []
+        for row in cursor:
+            all_stocks.append(TickerDetails.return_ticker(row))
+        return all_stocks
+
     @staticmethod
     def get_option_strike_offset(option_type, strike):
         if strike == 'ITM':
