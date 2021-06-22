@@ -16,14 +16,12 @@ class Algo:
     def startAlgo():
 
         # Creating Logging
+        logger_dir = os.path.join(pathlib.Path.home(), 'Log/Algo')
+        date_str = datetime.now().strftime("%d%m%Y")
+        log_file_name = 'Algo_' + date_str + '.log'
+        log_file = os.path.join(logger_dir, log_file_name)
+        logger = GetLogger(log_file).get_logger()
         try:
-            logger_dir = os.path.join(pathlib.Path.home(), 'Log/Algo')
-            date_str = datetime.now().strftime("%d%m%Y")
-            log_file_name = 'Algo_' + date_str + '.log'
-            log_file = os.path.join(logger_dir, log_file_name)
-            logger = GetLogger(log_file).get_logger()
-
-
             # if Utils.isMarketClosedForTheDay():
             #     logging.warning("%s: Not going to run strategy as market is closed.", self.getName())
             #     return
