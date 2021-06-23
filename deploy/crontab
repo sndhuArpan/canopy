@@ -1,2 +1,4 @@
+0 9 * * * /home/ec2-user/canopy/canopy/src/core/RunMarketDataLoader.sh  > MarketData.log
 0 9 * * * /home/ec2-user/canopy/canopy/src/core/RunAlgo.sh > Algo.log
+0 17 * * * /home/ec2-user/canopy/canopy/src/core/KillMarketDataLoader.sh > KillMarketDataLoader.log
 0 18 * * 5 /home/ec2-user/canopy/canopy/src/StockTrigger/RunScanner/RunNseStockScanner.sh > NseStockScanner.log
