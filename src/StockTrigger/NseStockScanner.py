@@ -5,6 +5,7 @@ from datetime import datetime
 from Logging.Logger import GetLogger
 from src.DB.market_data.Market_Data import MarketData
 from src.DB.static_db.TickerDetails import TickerDetails
+from src.DB.static_db.stock_scanner_db import stock_scanner_db, stock_scanner_model
 from utils.Utils import interval_enum
 from utils.telegram import telegram
 
@@ -26,7 +27,7 @@ class NseStockScanner:
         self.market_data = MarketData()
 
     def find_stocks(self):
-        valid_shares = []
+        valid_shares = {}
         self.logger.info('Scan Started')
         for stock_info in self.static_db:
             try:
@@ -56,7 +57,6 @@ class NseStockScanner:
                         is_valid_high = True
                     else:
                         is_valid_high = False
-
                     if is_valid_high:
                         low_values = data['low']
                         for index, value in reversed(list(enumerate(low_values))):
@@ -70,13 +70,22 @@ class NseStockScanner:
                         fibbo_low_level = max_low_value + (high_low_diff * self.fibo_low_level)
 
                         if fibbo_high_level >= data['close'][data.index[-1]] >= fibbo_low_level:
-                            valid_shares.append('NSE:' + stock_info.name)
+                            valid_shares[stock_info.token] = 'NSE:' + stock_info.name
             except Exception as e:
                 self.logger.error(str(e))
 
         self.logger.info("Scan Completed")
         self.logger.info(f'{str(len(valid_shares))} valid share found')
-        str_valid_shares = ','.join(valid_shares)
+        str_valid_shares = ','.join(valid_shares.values())
+        try:
+            db = stock_scanner_db()
+            model_list = []
+            for valid_share in valid_shares:
+                model = stock_scanner_model(token=valid_share, name=valid_shares[valid_share], scanner_name=self.__class__.__name__, time=datetime.now().date())
+                model_list.append(model)
+            db.insert_scanned_stocks(model_list=model_list, scanner_name=self.__class__.__name__)
+        except Exception as e:
+            self.logger.error(str(e))
         self.logger.info(str_valid_shares)
         telegram.send_text(str_valid_shares)
 
