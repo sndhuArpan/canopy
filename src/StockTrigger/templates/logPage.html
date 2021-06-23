@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Log Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+</head>
+<script>
+function selectedLog() {
+var selected_log= $('#selected_log').val();
+$("#log_area").empty();
+  $.ajax({
+              url: "/selected_log",
+              type: "GET",
+              data: {selected_log:selected_log}
+
+          }).done(function(response) {
+               $("#log_area").val(response);
+            });
+};
+  </script>
+<body>
+<p>
+        Select Log File<br><br>
+            <select  onchange="selectedLog()" id = 'selected_log' name=log>
+                {% for files in log_files %}
+                <option value= "{{files}}" SELECTED>{{files}}</option>"
+                {% endfor %}
+            </select>
+
+<textarea id="log_area" name="log_area" rows="50" cols="50">
+  </textarea>
+
+</body>
+</html>

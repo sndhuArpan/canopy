@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Front Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+
+<script>
+
+function submit() {
+var ele = document.getElementsByName('page');
+var selected_val = ''
+for(i = 0; i < ele.length; i++) {
+                if(ele[i].checked){
+                    selected_val = ele[i].value;
+                    break;
+                }
+            }
+console.log(selected_val)
+  $.ajax({
+              url: "/indexPage",
+              type: "POST",
+              data: {page_selected:selected_val}
+
+          }).done(function(response) {
+          window.location.replace(response);
+          });
+};
+
+  </script>
+<body>
+<p>
+    <input type="radio" name="page" value="Alert">Alert
+    <input type="radio" name="page" value="DB">DB
+    <input type="radio" name="page" value="Log">Log
+
+    <button id="clicked" onclick="submit()">Submit</button>
+</p>
+</body>
+</html>

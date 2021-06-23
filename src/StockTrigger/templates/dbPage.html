@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DB Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+
+<script>
+function selectDB() {
+var selected_db= $('#selected_db').val();
+$("#divResults").empty();
+  $.ajax({
+              url: "/select_db",
+              type: "GET",
+              data: {selected_db:selected_db}
+
+          }).done(function(response) {
+              var x = document.getElementById("tables_id");
+              if (x.style.display === "none") {
+                x.style.display = "block";
+              }
+
+               var len = response.length;
+
+                $("#selected_table").empty();
+                for( var i = 0; i<len; i++){
+                    var name = response[i];
+                    $("#selected_table").append("<option value='"+name+"'>"+name+"</option>");
+
+                }
+
+            });
+};
+
+function submitTable() {
+var selected_table= $('#selected_table').val();
+var selected_db= $('#selected_db').val();
+$("#divResults").empty();
+  $.ajax({
+              url: "/fetch_table_data",
+              type: "GET",
+              data: {selected_table:selected_table,
+              selected_db:selected_db}
+
+          }).done(function(response) {
+            $("#divResults").append(response);
+            var html= "<br><br><br><p> <b> RESULT : <b><p>";
+            });
+};
+
+  </script>
+<body>
+    <p>
+        Select DB<br><br>
+            <select  onchange="selectDB()" id = 'selected_db' name= db>
+                {% for db in dbs %}
+                <option value= "{{db}}" SELECTED>{{db}}</option>"
+                {% endfor %}
+            </select>
+
+        <div id="tables_id" style="display: none;">
+            Select table<br><br>
+            <select  id = 'selected_table' name=table>
+            </select>
+        <button id="clicked" onclick="submitTable()">Submit</button>
+        </div>
+        <div id="divResults"></div>
+        </p>
+    <div class="show-data" >
+
+    </div>
+</body>
+</html>

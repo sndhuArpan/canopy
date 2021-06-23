@@ -237,11 +237,15 @@ class canopy_db:
             columns_list.append(i[0])
         df.columns = columns_list
         df = df.loc[df['order_status'] == 'complete']
-        get_file_dir = os.path.join(pathlib.Path.home(), 'trade_csv') #os.path.dirname(__file__)
+        get_file_dir = os.path.join(pathlib.Path.home(), 'trade_csv')
         csv_file_path = os.path.join(get_file_dir, strategy_name+'_trades.csv')
-        if os.path.exists(csv_file_path):
-            df.to_csv(csv_file_path, mode='a', header=False)
+        if os.path.isdir(get_file_dir):
+            if os.path.exists(csv_file_path):
+                df.to_csv(csv_file_path, mode='a', header=False)
+            else:
+                df.to_csv(csv_file_path)
         else:
+            os.mkdir(get_file_dir)
             df.to_csv(csv_file_path)
         telegram.send_file(csv_file_path)
         if delete:
@@ -250,6 +254,25 @@ class canopy_db:
             self.conn.commit()
 
 
+    def select_all_tables(self):
+        select_query = 'SELECT tbl_name FROM sqlite_master WHERE type="table"'
+        cursor = self.conn.execute(select_query)
+        table_names = []
+        for row in cursor:
+            table_names.append(row[0])
+        return table_names
+
+    def select_table_as_dataframe(self, table_name):
+        select_query = 'select * from ' + table_name
+        cursor = self.conn.execute(select_query)
+        df = DataFrame(cursor.fetchall())
+        if df.empty:
+            return DataFrame()
+        columns_list = []
+        for i in cursor.description:
+            columns_list.append(i[0])
+        df.columns = columns_list
+        return df
 
 
 
