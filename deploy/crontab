@@ -1,1 +1,2 @@
-00 9 * * 1-5 /home/ec2-user/canopy/canopy/src/core/RunAlgo.sh >/dev/null 2>&1
+0 9 * * * /home/ec2-user/canopy/canopy/src/core/RunAlgo.sh > Algo.log
+0 18 * * 5 /home/ec2-user/canopy/canopy/src/StockTrigger/RunScanner/RunNseStockScanner.sh > NseStockScanner.log
