@@ -13,6 +13,7 @@ from src.DB.static_db.static_db import static_db
 
 app = Flask(__name__)
 
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -35,7 +36,7 @@ def Log():
     comp_path = os.path.join(get_file_dir, '../Log/')
     folders = os.listdir(comp_path)
     all_files = []
-    date_str = '18062021'#datetime.now().strftime("%d%m%Y")
+    date_str = '18062021'  # datetime.now().strftime("%d%m%Y")
     for i in folders:
         files = os.listdir(comp_path + "/" + i)
         for f in files:
@@ -43,6 +44,7 @@ def Log():
                 all_files.append(f)
                 break
     return render_template('logPage.html', log_files=all_files)
+
 
 @app.route('/selected_log', methods=['GET'])
 def get_log_file_val():
@@ -92,6 +94,13 @@ def fetch_table_data():
         table_df = static_sql.select_table_as_dataframe(selected_table)
 
     return jsonify(table_df.to_html())
+
+
+@app.route('/indexPage', methods=['POST'])
+def my_form_post():
+    page_selected = request.form['page_selected']
+    return page_selected
+
 
 if __name__ == '__main__':
     app.run(debug=True)
