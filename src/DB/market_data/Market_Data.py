@@ -29,7 +29,7 @@ class LtpPriceModel:
 
 class TickerMsg:
     def __init__(self):
-        self.time = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+        self.time = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
         self.message = None
         self.status = None
 
@@ -92,8 +92,8 @@ class MarketData:
             if ltp_time is None:
                 self.deregister_token(token)
             else:
-                last_trade_time = datetime.datetime.strptime(ltp_time, '%d/%m/%Y %H:%M:%S')
-                if last_trade_time < (datetime.datetime.now() - datetime.timedelta(seconds=120)):
+                last_trade_time = datetime.strptime(ltp_time, '%d/%m/%Y %H:%M:%S')
+                if last_trade_time < (datetime.now() - timedelta(seconds=120)):
                     self.deregister_token(token)
 
     def deregister_all_token(self):

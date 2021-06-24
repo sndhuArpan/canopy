@@ -24,7 +24,7 @@ class MarketDataWebSocketFallback:
     def __init__(self):
         logger_dir = os.path.join(pathlib.Path.home(), 'Log/MarketData')
         date_str = datetime.now().strftime("%d%m%Y")
-        log_file_name = 'market_data_' + date_str + '.log'
+        log_file_name = 'market_data_fallback_' + date_str + '.log'
         log_file = os.path.join(logger_dir, log_file_name)
         self.logger = GetLogger(log_file).get_logger()
 
