@@ -6,13 +6,10 @@ from dateutil import relativedelta
 import requests
 import pandas as pd
 
+from src.DB.static_db.static_db import static_db
 
-class ClientStrategyInfo:
 
-    def __init__(self):
-        get_file_dir = os.path.dirname(__file__)
-        db_file = os.path.join(get_file_dir, '../../../db_files/static_db.db')
-        self.conn = sqlite3.connect(db_file)
+class ClientStrategyInfo(static_db):
 
     def create_table_strategy_client_map(self):
         create_table = '''create table strategy_client_map(strategy_name varchar2(30), 

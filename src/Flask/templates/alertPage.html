@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>First Flask App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+
+<script>
+
+function submit_alert() {
+$(".show-data").empty();
+var price= $('#price').val();
+var selected_interval= $('#selected_interval').val();
+var selected_stock= $('#selected_stock').val();
+  $.ajax({
+              url: "/save_alert",
+              type: "POST",
+              data: {price:price,
+              selected_interval:selected_interval,
+              selected_stock:selected_stock}
+
+          }).done(function(response) {
+                alert("Alert Added")
+            });
+};
+
+  </script>
+<body>
+    <p>
+        Taking input from web<br><br>
+
+            Price<input type="text" id="price" name="price"><br><br>
+            <select id = 'selected_stock' name= stock>
+                {% for valid_stock in valid_stocks %}
+                <option value= "{{valid_stock}}" SELECTED>{{valid_stock}}</option>"
+                {% endfor %}
+            </select>
+
+            <select id = 'selected_interval' name= interval>
+                {% for interval in all_interval %}
+                <option value= "{{interval}}" SELECTED>{{interval}}</option>"
+                {% endfor %}
+            </select>
+            <button id="clicked" onclick="submit_alert()">Submit</button>
+        </p>
+    <div class="show-data" >
+
+    </div>
+</body>
+</html>

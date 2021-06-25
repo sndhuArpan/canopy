@@ -9,7 +9,11 @@ import json
 
 from src.DB.canopy.canopy_db import canopy_db
 from src.DB.market_data.Market_Data import MarketData
+from src.DB.static_db.TickerDetails import TickerDetails
+from src.DB.static_db.alert_trigger import alert_trigger, alert_trigger_model
 from src.DB.static_db.static_db import static_db
+from src.core.alert_checker import alert_checker
+from utils.Utils import Utils, interval_enum
 
 app = Flask(__name__)
 
@@ -21,7 +25,17 @@ def home():
 
 @app.route('/Alert')
 def Alert():
-    return render_template('alertPage.html')
+    ticker_sql = TickerDetails()
+    all_stocks = ticker_sql.get_all_stocks('nse')
+    valid_stocks = []
+    for stock in all_stocks:
+        if '-EQ' in stock.symbol:
+            valid_stocks.append(stock.symbol)
+    all_interval = []
+    for interval in interval_enum:
+        if interval.name in alert_checker.valid_interval:
+            all_interval.append(interval.name)
+    return render_template('alertPage.html', valid_stocks=valid_stocks, all_interval=all_interval)
 
 
 @app.route('/DB')
@@ -32,11 +46,10 @@ def DB():
 
 @app.route('/Log')
 def Log():
-    get_file_dir = os.path.dirname(__file__)
-    comp_path = os.path.join(get_file_dir, '../Log/')
+    comp_path = os.path.join(pathlib.Path.home(), 'Log/')
     folders = os.listdir(comp_path)
     all_files = []
-    date_str = '18062021'  # datetime.now().strftime("%d%m%Y")
+    date_str = datetime.now().strftime("%d%m%Y")
     for i in folders:
         files = os.listdir(comp_path + "/" + i)
         for f in files:
@@ -49,8 +62,7 @@ def Log():
 @app.route('/selected_log', methods=['GET'])
 def get_log_file_val():
     selected_log = request.args.get('selected_log')
-    get_file_dir = os.path.dirname(__file__)
-    comp_path = os.path.join(get_file_dir, '../Log/')
+    comp_path = os.path.join(pathlib.Path.home(), 'Log/')
     folders = os.listdir(comp_path)
     log_string = ""
     for i in folders:
@@ -100,6 +112,17 @@ def fetch_table_data():
 def my_form_post():
     page_selected = request.form['page_selected']
     return page_selected
+
+
+@app.route('/save_alert', methods=['POST'])
+def save_alert():
+    selected_stock = request.form['selected_stock']
+    selected_interval = request.form['selected_interval']
+    price = request.form['price']
+    db = alert_trigger()
+    model = alert_trigger_model(symbol=selected_stock, price=price, interval=selected_interval, triggered=0)
+    db.insert_alert(model)
+    return "done"
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ class static_db:
     def __init__(self):
         get_file_dir = os.path.dirname(__file__)
         db_file = os.path.join(get_file_dir, '../../../db_files/static_db.db')
-        self.conn = sqlite3.connect(db_file)
+        self.conn = sqlite3.connect(db_file, check_same_thread=False)
 
     def select_all_tables(self):
         select_query = 'SELECT tbl_name FROM sqlite_master WHERE type="table"'

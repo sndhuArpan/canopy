@@ -6,6 +6,9 @@ from dateutil import relativedelta
 import requests
 import pandas as pd
 
+from src.DB.static_db.static_db import static_db
+
+
 class TickerInfo:
 
     def __init__(self, token, symbol, name, expiry, strike, lotsize, instrumenttype, exch_seg, tick_size):
@@ -22,12 +25,8 @@ class TickerInfo:
     def get(self):
         return self
 
-class TickerDetails:
 
-    def __init__(self):
-        get_file_dir = os.path.dirname(__file__)
-        db_file = os.path.join(get_file_dir, '../../../db_files/static_db.db')
-        self.conn = sqlite3.connect(db_file)
+class TickerDetails(static_db):
 
     def create_table_ticker_details_load_date(self):
         create_table = '''create table ticker_details_load_date(load_date varchar2(10))'''
@@ -47,7 +46,7 @@ class TickerDetails:
         self.conn.commit()
         insert_latest_date = '''insert into ticker_details_load_date(load_date) values ("{latest_date}")'''
         latest_date = datetime.now().strftime('%d%m%Y')
-        self.conn.execute(insert_latest_date.format(latest_date= latest_date))
+        self.conn.execute(insert_latest_date.format(latest_date=latest_date))
         self.conn.commit()
 
     def drop_angel_symbol_token_mapping_tables(self, exchange):
@@ -135,13 +134,13 @@ class TickerDetails:
         df = pd.DataFrame({'LoadedDate': expiry_list})
         month = df.groupby(df.LoadedDate - pd.offsets.MonthEnd()).last().reset_index(drop=True)
         month_ends = month['LoadedDate'].to_list()
-        all_valid_monthly_expiry = [x for x in month_ends if curr_date < x ]
+        all_valid_monthly_expiry = [x for x in month_ends if curr_date < x]
         return all_valid_monthly_expiry[monthly_expiry_offset].strftime('%d%b%Y').upper()
 
     def get_weekly_expiry_for_symbol(self, exchange, symbol, weekly_expiry_offset=0):
         curr_date = datetime.now()
         expiry_list = self._get_all_expiry(exchange, symbol)
-        #check weekly expiry exists
+        # check weekly expiry exists
         week_counts = 0
         next_month_expiry = []
         for expiry in expiry_list:
@@ -201,7 +200,7 @@ class TickerDetails:
                           ORDER BY ABS(strike_price - {ltp})
                           LIMIT 1
                           OFFSET {price_offset}'''
-        #print(select_query.format(symbol=symbol,expiry=expiry,option_type=option_type,ltp=ltp,price_offset=price_offset))
+        # print(select_query.format(symbol=symbol,expiry=expiry,option_type=option_type,ltp=ltp,price_offset=price_offset))
         cursor = self.conn.execute(select_query.format(symbol=symbol,
                                                        expiry=expiry,
                                                        option_type=option_type,
@@ -209,6 +208,7 @@ class TickerDetails:
                                                        price_offset=price_offset))
         for row in cursor:
             return TickerDetails.return_ticker(row)
+
 
 if __name__ == '__main__':
     obj = TickerDetails()
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     # print(ticker.symbol)
     # ticker = obj.get_option_token('NSE', 'MARUTI-EQ', 'PE', 7235, 'MONTHLY', 'OTM')
     # print(ticker.symbol, ticker.expiry)
-    #ticker = obj.get_nse_future_token('MARUTI-EQ', 1)
-    #ticker = obj.get_nse_option_token('MARUTI-EQ', 'PE', 7000, 'ATM')
-    #print(ticker.symbol)
-    #print(month_end_expiry)
+    # ticker = obj.get_nse_future_token('MARUTI-EQ', 1)
+    # ticker = obj.get_nse_option_token('MARUTI-EQ', 'PE', 7000, 'ATM')
+    # print(ticker.symbol)
+    # print(month_end_expiry)

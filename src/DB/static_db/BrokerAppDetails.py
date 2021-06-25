@@ -3,6 +3,8 @@ import os
 import pathlib
 
 from cryptography.fernet import Fernet
+
+from src.DB.static_db.static_db import static_db
 from utils.Utils import Utils
 from smartapi import SmartConnect
 
@@ -20,13 +22,10 @@ class Connection:
         return self
 
 
-class BrokerAppDetails:
+class BrokerAppDetails(static_db):
 
     def __init__(self):
-        get_file_dir = os.path.dirname(__file__)
-        db_file = os.path.join(get_file_dir, '../../../db_files/static_db.db')
-        self.conn = sqlite3.connect(db_file)
-
+        super().__init__()
         encrypt_file = os.path.join(pathlib.Path(os.path.dirname(__file__)).parents[2], 'EncryptionKey.txt')
         infile = open(encrypt_file, 'r')
         key = infile.readline()
