@@ -12,7 +12,7 @@ from utils.Utils import interval_enum, Utils
 
 
 class alert_checker:
-    valid_interval = ['ONE_MINUTE', 'FIFTEEN_MINUTE', 'THIRTY_MINUTE', 'ONE_HOUR', 'ONE_DAY']
+    valid_interval = ['FIFTEEN_MINUTE', 'THIRTY_MINUTE', 'ONE_HOUR', 'ONE_DAY']
 
     def __init__(self):
         logger_dir = os.path.join(pathlib.Path.home(), 'Log/AlertChecker')
