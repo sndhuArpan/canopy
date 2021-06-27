@@ -9,6 +9,7 @@ from src.DB.market_data.Market_Data import MarketData, LtpPriceModel
 from src.DB.static_db.TickerDetails import TickerDetails
 from src.DB.static_db.alert_trigger import alert_trigger
 from utils.Utils import interval_enum, Utils
+from utils.telegram import telegram
 
 
 class alert_checker:
@@ -90,7 +91,7 @@ class alert_checker:
                         self.logger.info(f'alert triggered for {interval_alert.symbol} for {interval.name} interval')
                         interval_alert.triggered = '1'
                         self.alert_db.update_alert_trigger_status(interval_alert)
-                        # send telegram
+                        telegram.send_text(f'Alert triggered for {interval_alert.symbol} at price {str(price)} for {interval.name} interval')
 
                 sleep_time = datetime.now().replace(minute=15, hour=9, second=0) + timedelta(minutes=interval.value*multiplier)
                 multiplier = multiplier + 1
@@ -119,7 +120,8 @@ class alert_checker:
                     self.logger.info(f'alert triggered for {interval_alert.symbol} for {interval.name} interval')
                     interval_alert.triggered = '1'
                     self.alert_db.update_alert_trigger_status(interval_alert)
-                    # send telegram
+                    telegram.send_text(f'Alert triggered for {interval_alert.symbol} at price {str(price)} for {interval.name} interval')
+
         except Exception as e:
             self.logger.error(f'Exception occured for alert checker {interval.name} Thread -- {str(e)}')
 
