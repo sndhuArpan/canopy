@@ -14,6 +14,8 @@ sudo yum install -y python3
 sudo yum install -y sqlite git
 sudo yum install -y python3-devel
 
+sudo amazon-linux-extras install nginx1 -y
+
 # Create project directory
 mkdir -p $PROJECT_BASE_PATH
 git clone $PROJECT_GIT_URL $PROJECT_BASE_PATH

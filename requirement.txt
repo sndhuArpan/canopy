@@ -14,3 +14,4 @@ smartapi-python
 websocket-client
 python-telegram-bot
 flask
+gunicorn

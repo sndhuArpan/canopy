@@ -17,6 +17,7 @@ from src.DB.market_data.Market_Data import MarketData, LtpPriceModel
 from src.DB.static_db.TickerDetails import TickerDetails
 from Logging.Logger import GetLogger
 from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
+from utils.telegram import telegram
 
 
 class MarketDataWebSocketFallback:
@@ -78,6 +79,7 @@ class MarketDataWebSocketFallback:
                     self.logger.error('@@@@@@@@@@    KILL PROCESS    @@@@@@@@@@@')
                     self.logger.error('@@@@@@@@@@ SEND TELEGRAM ALERT @@@@@@@@@@@')
                     self.logger.error('set ltp to NONE')
+                    telegram.send_text("**** ERROR : Websocket Failure ****")
                     self.get_ltp_price_fallback(set_none = True)
                 self.logger.info('Latest Price in MARKET_DATA table in older than 20 secs')
                 self.logger.error('====>   Getting Latest price using fallback')
