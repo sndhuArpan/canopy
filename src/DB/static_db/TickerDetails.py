@@ -115,12 +115,12 @@ class TickerDetails(static_db):
             offset = 0
         return offset
 
-    def _get_all_expiry(self, exchange, symbol):
+    def _get_all_expiry(self, exchange, symbol, instrument_type):
         if exchange == 'CDS':
-            select_query = 'select distinct symbol_token_cds_map.expiry  from  symbol_token_cds_map  where symbol_token_cds_map.name = "{symbol}"'
+            select_query = 'select distinct symbol_token_cds_map.expiry  from  symbol_token_cds_map  where symbol_token_cds_map.name = "{symbol}" and symbol_token_cds_map.instrumenttype like "{instrument_type}%"'
         else:
-            select_query = 'select distinct symbol_token_nfo_map.expiry  from  symbol_token_nfo_map join symbol_token_nse_map on symbol_token_nfo_map.name = symbol_token_nse_map.name where symbol_token_nse_map.symbol = "{symbol}"'
-        cursor = self.conn.execute(select_query.format(symbol=symbol))
+            select_query = 'select distinct symbol_token_nfo_map.expiry  from  symbol_token_nfo_map join symbol_token_nse_map on symbol_token_nfo_map.name = symbol_token_nse_map.name where symbol_token_nse_map.symbol = "{symbol}" and symbol_token_nfo_map.instrumenttype like "{instrument_type}%"'
+        cursor = self.conn.execute(select_query.format(symbol=symbol, instrument_type=instrument_type))
         expiry_list = []
         for row in cursor:
             if row[0] != "":
@@ -128,18 +128,18 @@ class TickerDetails(static_db):
         expiry_list.sort()
         return expiry_list
 
-    def get_monthly_expiry_for_symbol(self, exchange, symbol, monthly_expiry_offset=0):
+    def get_monthly_expiry_for_symbol(self, exchange, instrument_type, symbol, monthly_expiry_offset=0):
         curr_date = datetime.now()
-        expiry_list = self._get_all_expiry(exchange, symbol)
+        expiry_list = self._get_all_expiry(exchange, symbol, instrument_type)
         df = pd.DataFrame({'LoadedDate': expiry_list})
         month = df.groupby(df.LoadedDate - pd.offsets.MonthEnd()).last().reset_index(drop=True)
         month_ends = month['LoadedDate'].to_list()
         all_valid_monthly_expiry = [x for x in month_ends if curr_date < x]
         return all_valid_monthly_expiry[monthly_expiry_offset].strftime('%d%b%Y').upper()
 
-    def get_weekly_expiry_for_symbol(self, exchange, symbol, weekly_expiry_offset=0):
+    def get_weekly_expiry_for_symbol(self, exchange, instrument_type, symbol, weekly_expiry_offset=0):
         curr_date = datetime.now()
-        expiry_list = self._get_all_expiry(exchange, symbol)
+        expiry_list = self._get_all_expiry(exchange, symbol, instrument_type)
         # check weekly expiry exists
         week_counts = 0
         next_month_expiry = []
@@ -153,7 +153,7 @@ class TickerDetails(static_db):
             return next_month_expiry[weekly_expiry_offset].strftime('%d%b%Y').upper()
 
     def get_future_token(self, exchange, symbol, month_offset=0):
-        expiry = self.get_monthly_expiry_for_symbol(exchange, symbol, month_offset)
+        expiry = self.get_monthly_expiry_for_symbol(exchange, 'FUT', symbol, month_offset)
         if exchange == 'CDS':
             select_query = '''SELECT symbol_token_cds_map.* from symbol_token_cds_map 
                               where symbol_token_cds_map.name = "{symbol}"
@@ -172,9 +172,9 @@ class TickerDetails(static_db):
 
     def get_option_token(self, exchange, symbol, option_type, ltp, expiry_type='MONTHLY', strike='ATM', offset=0):
         if expiry_type == 'WEEKLY':
-            expiry = self.get_weekly_expiry_for_symbol(exchange, symbol, offset)
+            expiry = self.get_weekly_expiry_for_symbol(exchange, 'OPT', symbol, offset)
         else:
-            expiry = self.get_monthly_expiry_for_symbol(exchange, symbol, offset)
+            expiry = self.get_monthly_expiry_for_symbol(exchange, 'OPT', symbol, offset)
         price_offset = TickerDetails.get_option_strike_offset(option_type, strike)
         if exchange == 'CDS':
             select_query = '''select * from 
