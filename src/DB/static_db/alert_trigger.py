@@ -51,7 +51,7 @@ class alert_trigger(static_db):
         return stocks
 
     def update_alert_trigger_status(self, model):
-        update_query = f'update alert_trigger set triggered = "{model.triggered}" where symbol = "{model.symbol}"'
+        update_query = f'update alert_trigger set triggered = "{model.triggered}" where symbol = "{model.symbol}" and interval ="{model.interval}"'
         self.conn.execute(update_query)
         self.conn.commit()
 
