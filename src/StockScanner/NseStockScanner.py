@@ -28,6 +28,7 @@ class NseStockScanner:
 
     def find_stocks(self):
         valid_shares = {}
+        fno_shares = {}
         self.logger.info('Scan Started')
         for stock_info in self.static_db:
             try:
@@ -71,6 +72,7 @@ class NseStockScanner:
 
                         if fibbo_high_level >= data['close'][data.index[-1]] >= fibbo_low_level:
                             valid_shares[stock_info.token] = 'NSE:' + stock_info.name
+                            fno_shares['NSE:' + stock_info.name] = stock_info.symbol
             except Exception as e:
                 self.logger.error(str(e))
 
@@ -81,12 +83,28 @@ class NseStockScanner:
             db = stock_scanner_db()
             model_list = []
             for valid_share in valid_shares:
-                model = stock_scanner_model(token=valid_share, name=valid_shares[valid_share], scanner_name=self.__class__.__name__, time=datetime.now().date())
+                model = stock_scanner_model(token=valid_share, name=valid_shares[valid_share],
+                                            scanner_name=self.__class__.__name__, time=datetime.now().date())
                 model_list.append(model)
             db.insert_scanned_stocks(model_list=model_list, scanner_name=self.__class__.__name__)
         except Exception as e:
             self.logger.error(str(e))
         self.logger.info(str_valid_shares)
+        telegram.send_text(str_valid_shares)
+        self.send_fno_list(fno_shares)
+
+    def send_fno_list(self, fno_shares):
+        ticker_db = TickerDetails()
+        future_symbols = []
+        for share in fno_shares:
+            share_val = fno_shares.get(share)
+            future_token = ticker_db.get_future_token('nse', share_val, month_offset=0)
+            if future_token is not None:
+                future_symbols.append(share)
+
+        self.logger.info(f'{str(len(future_symbols))} valid futures found')
+        str_valid_shares = ','.join(future_symbols)
+        self.logger.info(f'{str_valid_shares}')
         telegram.send_text(str_valid_shares)
 
     def check_valid_share(self, close, vol):

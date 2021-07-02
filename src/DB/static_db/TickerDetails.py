@@ -135,6 +135,8 @@ class TickerDetails(static_db):
         month = df.groupby(df.LoadedDate - pd.offsets.MonthEnd()).last().reset_index(drop=True)
         month_ends = month['LoadedDate'].to_list()
         all_valid_monthly_expiry = [x for x in month_ends if curr_date < x]
+        if not all_valid_monthly_expiry:
+            return None
         return all_valid_monthly_expiry[monthly_expiry_offset].strftime('%d%b%Y').upper()
 
     def get_weekly_expiry_for_symbol(self, exchange, instrument_type, symbol, weekly_expiry_offset=0):
@@ -208,6 +210,8 @@ class TickerDetails(static_db):
                                                        price_offset=price_offset))
         for row in cursor:
             return TickerDetails.return_ticker(row)
+
+
 
 
 if __name__ == '__main__':
