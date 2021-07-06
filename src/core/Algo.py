@@ -65,7 +65,7 @@ class Algo:
             ### create daily csv and deleting all daily data
             canopy_sql = canopy_db()
             for strategy_name in all_strategies_name:
-                canopy_sql.create_csv(strategy_name=strategy_name, delete=True)
+                canopy_sql.create_csv(strategy_name=strategy_name, delete=False)
 
             logger.info("Algo completed for the day.")
         except Exception as e:
