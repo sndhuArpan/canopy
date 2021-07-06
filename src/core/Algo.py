@@ -6,7 +6,9 @@ import pathlib
 from Logging.Logger import GetLogger
 from src.DB.canopy.canopy_db import canopy_db
 from src.strategies.CurrencyStrategy_30 import CurrencyStrategy_30
+
 from src.DB.static_db.TickerDetails import TickerDetails
+from src.strategies.PositionalStrategy import PositionalStrategy
 from utils.Utils import Utils
 
 
@@ -46,6 +48,10 @@ class Algo:
             logger.info("Strategy CurrencyStrategy_30 run initiating")
             all_strategies_job.append(threading.Thread(target=CurrencyStrategy_30.getInstance().run))
             all_strategies_name.append('CurrencyStrategy_30')
+
+            logger.info("Strategy Positional Strategy run initiating")
+            all_strategies_job.append(threading.Thread(target=PositionalStrategy.getInstance().run))
+            all_strategies_name.append('PositionalStrategy')
 
             # threading.Thread(target=TradeManager.update_trade_status).start()
 
