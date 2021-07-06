@@ -282,7 +282,7 @@ class PositionalStrategy(BaseStrategy):
         ticker_info = self.ticker_detail.get_token_info(symbol, 'nse')
         self.token_dict[symbol] = ticker_info.token
         ltp_model = LtpPriceModel().initialize(ticker_info.token, ticker_info.exch_seg)
-        # self.market_data.register_token(ltp_model)
+        self.market_data.register_token(ltp_model)
 
     def placeTrade(self, trade):
         if not self.incubation:
