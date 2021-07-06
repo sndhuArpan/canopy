@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>First Flask App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+
+<script>
+function empty_table(){
+$("#dataTable").empty();
+}
+
+function edit(rowId){
+document.getElementById("save_"+rowId).disabled = false;
+status = document.getElementById("status_"+rowId).textContent;
+if (status == 'ACTIVE'){
+document.getElementById("half_book_price_"+rowId).disabled = false;
+}
+document.getElementById("stoploss_"+rowId).disabled = false;
+}
+
+function save_trade(rowId){
+let half_book_price = document.getElementById("half_book_price_"+rowId).value;
+let stoploss = document.getElementById("stoploss_"+rowId).value;
+$("#dataTable").empty();
+$.ajax({
+              url: "/update_trade",
+              type: "POST",
+              data: {id:rowId,
+              half_book_price:half_book_price,
+              stoploss:stoploss}
+          }).done(function(response) {
+            createTable(response);
+            });
+}
+
+function select_client() {
+$("#dataTable").empty();
+var selected_client= $('#selected_client').val();
+$("#divResults").empty();
+  $.ajax({
+              url: "/get_trades_client",
+              type: "POST",
+              data: {selected_client:selected_client}
+
+          }).done(function(response) {
+              console.log(response)
+              createTable(response)
+            });
+};
+
+function createTable(response){
+
+let content = "<table border = 1><tr><th>Client ID</th><th>Symbol</th><th>Fill Price</th><th>Half Book Price</th>"
+    content += "<th>qty</th><th>remaining_qty</th><th>status</th><th>stoploss</th></tr>"
+for(i=0; i<response.length; i++){
+    content += '<tr><td>' +  response[i].client_id + '</td><td>' +  response[i].symbol + '</td>';
+    content += '<td >'+ response[i].fill_price+' </td>';
+    content += '<td > <input id = half_book_price_'+response[i].id+' type=number min=0 step=any disabled=true value = '+ response[i].half_book_price +'></input></td>';
+    content += '<td >'+ response[i].qty +'</td>';
+    content += '<td >'+ response[i].remaining_qty +'</td>';
+    content += '<td id=status_'+response[i].id+'>'+ response[i].status +'</td>';
+    content += '<td > <input id = stoploss_'+response[i].id+' type=number min=0 step=any disabled=true value = '+ response[i].stoploss +'></input></td>';
+    content += '<td>' +  '<button  onclick=edit('+response[i].id+') id = '+response[i].id+'>EDIT</button>' + '</td>';
+    content += '<td>' +  '<button onclick=save_trade('+response[i].id+') id = save_'+response[i].id+' disabled=true >SAVE</button>' + '</td></tr>';
+}
+content += "</table>"
+
+$('#dataTable').append(content);
+}
+  </script>
+<body>
+    <p>
+            Select Client<select onchange="empty_table()" id = 'selected_client' name= client>
+                {% for client in client_list %}
+                <option value= "{{client}}" SELECTED>{{client}}</option>"
+                {% endfor %}
+            </select>
+
+            <button id="clicked" onclick="select_client()">GET</button><br><br>
+        </p>
+    <div class="show-data" id = "dataTable">
+
+    </div>
+</body>
+</html>

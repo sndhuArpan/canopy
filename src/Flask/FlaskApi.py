@@ -1,6 +1,7 @@
 import sys
 
 from src.DB.postional.positional_db import positional_db, positional_model, trade_status
+from src.DB.static_db.BrokerAppDetails import BrokerAppDetails
 from src.DB.static_db.ClientStrategyInfo import ClientStrategyInfo
 
 sys.path.append('/home/ec2-user/canopy/canopy')
@@ -103,6 +104,35 @@ def see_added_stocks():
 def get_all_added_stock_json(db):
     all_added_stocks = db.get_trade_by_status(status_list=[trade_status.CREATED.name])
     return jsonify([stocks.to_dict() for stocks in all_added_stocks])
+
+
+@app.route('/trades')
+def trades():
+    broker_db = BrokerAppDetails()
+    client_list = broker_db.get_all_clients()
+    return render_template('tradePage.html', client_list=client_list)
+
+
+@app.route('/get_trades_client', methods=['POST'])
+def get_trades_client():
+    selected_client = request.form['selected_client']
+    db = positional_db()
+    all_trades = db.get_trade_by_client_status(client_id=selected_client, status_list=[trade_status.ACTIVE.name,
+                                                                                       trade_status.HALF_BOOK.name])
+    return jsonify([trade.to_dict() for trade in all_trades])
+
+
+@app.route('/update_trade', methods=['POST'])
+def update_trade():
+    id = request.form['id']
+    half_book_price = request.form['half_book_price']
+    stoploss = request.form['stoploss']
+    db = positional_db()
+    db.update_trade_target_stoploss(int(id), half_book_price=float(half_book_price), stoploss=float(stoploss))
+    trade = db.get_trade_by_id(int(id))
+    all_trades = db.get_trade_by_client_status(client_id=trade.client_id, status_list=[trade_status.ACTIVE.name,
+                                                                                       trade_status.HALF_BOOK.name])
+    return jsonify([trade.to_dict() for trade in all_trades])
 
 
 @app.route('/DB')

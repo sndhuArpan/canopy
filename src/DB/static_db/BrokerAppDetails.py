@@ -110,6 +110,13 @@ class BrokerAppDetails(static_db):
     def session_reconnect(self, client_id):
         self.create_normal_connection(client_id)
 
+    def get_all_clients(self):
+        select_query = 'select client_id from brokerclientdetails'
+        cursor = self.conn.execute(select_query)
+        client_list = []
+        for row in cursor:
+            client_list.append(row[0])
+        return client_list
 
 if __name__ == '__main__':
 

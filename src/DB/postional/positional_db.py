@@ -188,3 +188,14 @@ class positional_db:
         update_query = f'update positional_trades set status="{status}" where id = {id}'
         self.conn.execute(update_query)
         self.conn.commit()
+
+    def get_trade_by_client_status(self, client_id, status_list):
+        status_para = ','.join(['?'] * len(status_list))
+        select_query = f'select {self.__select_columns()} from positional_trades where client_id = "{client_id}" and status in ({status_para})'
+        cursor = self.conn.execute(select_query, status_list)
+        return self.__convert_row_model_list(cursor)
+
+    def update_trade_target_stoploss(self, id, half_book_price, stoploss):
+        update_query = f'update positional_trades set half_book_price = {half_book_price}, stoploss={stoploss}  where id = {id}'
+        self.conn.execute(update_query)
+        self.conn.commit()
