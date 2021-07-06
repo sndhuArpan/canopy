@@ -91,7 +91,8 @@ class CurrencyStrategy_30(BaseStrategy):
         only_buy = False
         only_sell = False
 
-        if abs(open - close)/self.one_pip < 7:
+        if abs(open - close)/self.one_pip < 3:
+            self.logger.info('Doji found -- no trade')
             return
         else:
             if open > close:
@@ -212,7 +213,7 @@ class CurrencyStrategy_30(BaseStrategy):
                                                         stop_loss)
                     self.placeTrade(trade, client)
 
-                    self.logger.info(f'{sell_qty} USDINR sold at market price for client {client}')
+                    self.logger.info(f'{sell_qty} USDINR sold at {latest_ltp} for client {client}')
 
                     if remaining_qty != 0:
                         half_sell = True
@@ -290,7 +291,7 @@ class CurrencyStrategy_30(BaseStrategy):
                                                         stop_loss)
                     self.placeTrade(trade, client)
 
-                    self.logger.info(f'{buy_qty} USDINR bought at market price for client {client}')
+                    self.logger.info(f'{buy_qty} USDINR bought at {latest_ltp} for client {client}')
 
                     if remaining_qty != 0:
                         half_buy = True

@@ -1,5 +1,8 @@
 import sys
 
+from src.DB.postional.positional_db import positional_db, positional_model, trade_status
+from src.DB.static_db.ClientStrategyInfo import ClientStrategyInfo
+
 sys.path.append('/home/ec2-user/canopy/canopy')
 sys.path.append('/Users/Sandhu/canopy/canopy/')
 sys.path.append('/Users/Sandhu/canopy/canopy/src')
@@ -46,9 +49,65 @@ def Alert():
     return render_template('alertPage.html', valid_stocks=valid_stocks, all_interval=all_interval)
 
 
+@app.route('/add_trade')
+def add_trade():
+    ticker_sql = TickerDetails()
+    all_stocks = ticker_sql.get_all_stocks('nse')
+    valid_stocks = []
+    for stock in all_stocks:
+        if '-EQ' in stock.symbol:
+            valid_stocks.append(stock.symbol)
+    all_interval = []
+    for interval in interval_enum:
+        if interval.name in alert_checker.valid_interval:
+            all_interval.append(interval.name)
+    return render_template('addTradePage.html', valid_stocks=valid_stocks, all_interval=all_interval)
+
+
+@app.route('/add_stock', methods=['POST'])
+def add_stock():
+    selected_stock = request.form['selected_stock']
+    price = request.form['price']
+    db = positional_db()
+    client_list = ClientStrategyInfo().get_client_by_strategy('Positional')
+    for client in client_list:
+        model = positional_model(symbol=selected_stock, entry_price=price, client_id=client)
+        db.insert_trade(model)
+    return get_all_added_stock_json(db)
+
+
+@app.route('/delete_stock', methods=['POST'])
+def delete_stock():
+    id = request.form['id']
+    db = positional_db()
+    db.delete_trade(int(id))
+    return get_all_added_stock_json(db)
+
+
+@app.route('/update_stock', methods=['POST'])
+def update_stock():
+    id = request.form['id']
+    entry_price = request.form['entry_price']
+
+    db = positional_db()
+    db.update_trade_price(int(id), float(entry_price))
+    return get_all_added_stock_json(db)
+
+
+@app.route('/see_added_stocks', methods=['GET'])
+def see_added_stocks():
+    db = positional_db()
+    return get_all_added_stock_json(db)
+
+
+def get_all_added_stock_json(db):
+    all_added_stocks = db.get_trade_by_status(status_list=[trade_status.CREATED.name])
+    return jsonify([stocks.to_dict() for stocks in all_added_stocks])
+
+
 @app.route('/DB')
 def DB():
-    dbs = ["canopy", "market_data", "static_db"]
+    dbs = ["canopy", "market_data", "static_db", "positional_db"]
     return render_template('dbPage.html', dbs=dbs)
 
 
@@ -95,6 +154,9 @@ def get_tables():
     if selected_db == 'static_db':
         static_sql = static_db()
         all_tables = static_sql.select_all_tables()
+    if selected_db == 'positional_db':
+        positional_sql = positional_db()
+        all_tables = positional_sql.select_all_tables()
     return jsonify(all_tables)
 
 
@@ -112,6 +174,9 @@ def fetch_table_data():
     if selected_db == 'static_db':
         static_sql = static_db()
         table_df = static_sql.select_table_as_dataframe(selected_table)
+    if selected_db == 'positional_db':
+        positional_sql = positional_db()
+        table_df = positional_sql.select_table_as_dataframe(selected_table)
 
     return jsonify(table_df.to_html())
 
@@ -134,4 +199,4 @@ def save_alert():
 
 
 if __name__ == '__main__':
-    app.run(port = 8000, debug=True)
+    app.run(port=8000, debug=True)

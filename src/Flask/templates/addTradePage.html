@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>First Flask App</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+
+<script>
+
+function add_stock() {
+$(".show-data").empty();
+var price= $('#price').val();
+var selected_stock= $('#selected_stock').val();
+  $.ajax({
+              url: "/add_stock",
+              type: "POST",
+              data: {price:price,
+              selected_stock:selected_stock}
+
+          }).done(function(response) {
+                createTable(response);
+            });
+};
+
+function added_stocks() {
+$(".show-data").empty();
+var price= $('#price').val();
+var selected_stock= $('#selected_stock').val();
+  $.ajax({
+              url: "/add_stock",
+              type: "POST",
+              data: {price:price,
+              selected_stock:selected_stock}
+
+          }).done(function(response) {
+            createTable(response);
+            });
+};
+
+function delete_stock(rowId) {
+$("#dataTable").empty();
+$.ajax({
+              url: "/delete_stock",
+              type: "POST",
+              data: {id:rowId}
+          }).done(function(response) {
+            createTable(response);
+            });
+};
+
+function edit_entry_price(rowId){
+document.getElementById("save_"+rowId).disabled = false;
+document.getElementById("entry_price_"+rowId).disabled = false;
+}
+
+function save_stock(rowId){
+let elem = document.getElementById("entry_price_"+rowId).value;
+$("#dataTable").empty();
+$.ajax({
+              url: "/update_stock",
+              type: "POST",
+              data: {id:rowId,
+              entry_price:elem}
+          }).done(function(response) {
+            createTable(response);
+            });
+}
+
+function see_added_stocks(){
+$("#dataTable").empty();
+$.ajax({
+              url: "/see_added_stocks",
+              type: "GET",
+          }).done(function(response) {
+            createTable(response);
+            });
+}
+
+function createTable(response){
+
+let content = "<table border = 1><tr><th>Client ID</th><th>Symbol</th><th>Entry Price</th></tr>"
+for(i=0; i<response.length; i++){
+    content += '<tr><td>' +  response[i].client_id + '</td><td>' +  response[i].symbol + '</td>';
+    content += '<td > <input id = entry_price_'+response[i].id+' type=number min=0 step=any disabled=true value = '+ response[i].entry_price +'></input></td>';
+    content += '<td>' +  '<button  onclick=edit_entry_price('+response[i].id+') id = '+response[i].id+'>EDIT</button>' + '</td>';
+    content += '<td>' +  '<button onclick=delete_stock('+response[i].id+') id = '+response[i].id+'>DELETE</button>' + '</td>';
+    content += '<td>' +  '<button onclick=save_stock('+response[i].id+') id = save_'+response[i].id+' disabled=true >SAVE</button>' + '</td></tr>';
+}
+content += "</table>"
+
+$('#dataTable').append(content);
+}
+
+  </script>
+<body>
+    <p>
+            Buy Price<input type="number" step="any" min="0" id="price" name="price">
+            Stock_Name<select id = 'selected_stock' name= stock>
+                {% for valid_stock in valid_stocks %}
+                <option value= "{{valid_stock}}" SELECTED>{{valid_stock}}</option>"
+                {% endfor %}
+            </select>
+
+            <button id="clicked" onclick="add_stock()">Submit</button><br><br>
+        <button id="see_all_trade" onclick="see_added_stocks()">See Added Stocks</button>
+        </p>
+    <div class="show-data" id = "dataTable">
+
+    </div>
+</body>
+</html>
