@@ -3,4 +3,4 @@ source $PROJECT_BASE_PATH/env/bin/activate
 
 export PYTHONPATH=$PROJECT_BASE_PATH
 
-python3 $PROJECT_BASE_PATH/src/StockTrigger/NseStockScanner.py
+python3 $PROJECT_BASE_PATH/src/StockScanner/NseStockScanner.py
