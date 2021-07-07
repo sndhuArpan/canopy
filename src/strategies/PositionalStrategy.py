@@ -48,7 +48,7 @@ class PositionalStrategy(BaseStrategy):
         self.productType = ProductType.NRML
         self.exchange = Exchange.NSE
         self.startTimestamp = Utils.getTimeOfToDay(9, 15, 0)
-        self.stopTimestamp = Utils.getTimeOfToDay(3, 16, 0)
+        self.stopTimestamp = Utils.getTimeOfToDay(15, 16, 0)
         self.market_data = MarketData()
         self.ticker_detail = TickerDetails()
         self.token_dict = {}
