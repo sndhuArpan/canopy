@@ -121,9 +121,13 @@ class PositionalStrategy(BaseStrategy):
                     continue
                 min_buy_price = trade.entry_price + ((trade.entry_price * self.min_buy_percent) / 100)
                 max_buy_price = trade.entry_price + ((trade.entry_price * self.max_buy_percent) / 100)
+                if price > max_buy_price:
+                    self.logger.info(f'{trade.symbol} is canceled for client {trade.client_id} as ltp crosses {max_buy_price} in Monitoring thread')
+                    self.update_trade_status(trade_id=trade.id, status=trade_status.CANCELED.name)
                 if min_buy_price < price < max_buy_price:
                     self.logger.info(f'Entry price {price} triggered for {trade.symbol} in Monitoring thread')
                     threading.Thread(target=self.execute_five_min_buy_trade, args=(trade, price,)).start()
+
 
         self.logger.info('Monitoring Thread Completed')
 
@@ -163,10 +167,16 @@ class PositionalStrategy(BaseStrategy):
 
         if ltp < buy_trade.entry_price:
             self.logger.info(f'5 min entry Failed for {buy_trade.symbol} for client {buy_trade.client_id}')
+            telegram.send_text_client(
+                f'5 min entry Failed for {buy_trade.symbol} at {ltp} for client {buy_trade.client_id}',
+                buy_trade.client_id)
             buy_trade = positional_db().get_trade_by_id(buy_trade.id)
             self.sell_all_share(buy_trade)
         else:
             self.logger.info(f'5 min entry Active for {buy_trade.symbol} for client {buy_trade.client_id}')
+            telegram.send_text_client(
+                f'5 min entry Active for {buy_trade.symbol} for client {buy_trade.client_id}',
+                buy_trade.client_id)
             self.update_trade_status(buy_trade.id, trade_status.ACTIVE.name)
 
     def start_Half_Book_thread(self):

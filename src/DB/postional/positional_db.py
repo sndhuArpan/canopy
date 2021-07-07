@@ -16,6 +16,7 @@ class trade_status(enum.Enum):
     HALF_BOOKING = 'HALF_BOOKING'
     COMPLETED = 'COMPLETED'
     SELLING = 'SELLING'
+    CANCELED = 'CANCELED'
 
 
 class positional_model:
