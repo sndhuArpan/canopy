@@ -80,6 +80,7 @@ class CurrencyStrategy_30(BaseStrategy):
         self.logger.info('In process method of CurrencyStrategy_30')
 
         data = self.market_data.get_ltp_data(self.exchange, self.token_detail.symbol, self.token_detail.token)
+        last_close = float(data['close'])
         high_range = float(data['high'])
         low_range = float(data['low'])
         close = float(data['ltp'])
@@ -90,14 +91,21 @@ class CurrencyStrategy_30(BaseStrategy):
         sell_sl = low_range + 5 * self.one_pip
         only_buy = False
         only_sell = False
+        gap_up_fill = True
+        gap_down_fill = True
+        if last_close < open and last_close < low_range:
+            gap_up_fill = False
+        if last_close > open and last_close > high_range:
+            gap_down_fill = False
+        self.logger.info(f'gap up fill {gap_up_fill} and gap down fill {gap_down_fill}')
 
         if abs(open - close)/self.one_pip < 3:
             self.logger.info('Doji found -- no trade')
             return
         else:
-            if open > close:
+            if open > close and gap_up_fill:
                 only_sell = True
-            else:
+            elif open < close and gap_down_fill:
                 only_buy = True
 
         info_String = 'open - {open}, close - {close}, buy_high_range - {buy_high_range}, ' \
@@ -327,4 +335,7 @@ class CurrencyStrategy_30(BaseStrategy):
     def next_five_min(self):
         now = datetime.now()
         return now.replace(minute=int(now.minute / 5) * 5, second=0, microsecond=0) + timedelta(minutes=5)
+
+if __name__ == '__main__':
+    CurrencyStrategy_30().getInstance().run()
 
