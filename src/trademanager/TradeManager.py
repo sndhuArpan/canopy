@@ -13,6 +13,7 @@ from src.OrderManager.OrderInputParams import OrderInputParams
 from src.models.OrderStatus import OrderStatus
 from src.models.OrderType import OrderType
 from src.models.Variety import Variety
+from utils.Utils import Utils
 from utils.telegram import telegram
 
 
@@ -111,6 +112,9 @@ class TradeManager:
     def update_trade_status(self):
         self.logger.info('In update trade status method')
         while True:
+            if datetime.now() > Utils.getTimeOfToDay(16, 30, 0):
+                self.logger.info('Existing trade status update method')
+                break
             try:
                 sql = canopy_db()
                 strategy_name_list = ['PositionalStrategy']
