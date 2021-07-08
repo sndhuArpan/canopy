@@ -12,6 +12,7 @@ from src.DB.static_db.TickerDetails import TickerDetails
 from src.models.Direction import Direction
 from src.models.Duration import Duration
 from src.models.Exchange import Exchange
+from src.models.OrderStatus import OrderStatus
 from src.models.Segment import Segment
 from src.strategies.BaseStrategy import BaseStrategy
 from src.models.ProductType import ProductType
@@ -19,6 +20,33 @@ from src.trademanager.Trade import Trade
 from src.trademanager.TradeManager import TradeManager
 from utils.Utils import Utils
 from utils.telegram import telegram
+
+
+def update_trade_status(trade_id, status):
+    positional_db().update_trade_status(id=trade_id, status=status)
+
+
+def get_trade_by_status(status):
+    return positional_db().get_trade_by_status(status_list=status)
+
+
+def complete_trade(id, exit_price_sec, remaining_qty, status):
+    positional_db().complete_trade(id, exit_price_sec=exit_price_sec,
+                                   remaining_qty=remaining_qty, status=status)
+
+
+def update_half_book_trade(id, exit_price_one,
+                           remaining_qty, status):
+    positional_db().update_half_book_trade(id, exit_price_one=exit_price_one,
+                                           remaining_qty=remaining_qty, status=status)
+
+
+def update_execute_trade(id, qty, stoploss, fill_price,
+                         half_book_price, remaining_qty,
+                         status):
+    positional_db().update_execute_trade(id=id, qty=qty, stoploss=stoploss, fill_price=fill_price,
+                                         half_book_price=half_book_price, remaining_qty=remaining_qty,
+                                         status=status)
 
 
 class PositionalStrategy(BaseStrategy):
@@ -45,7 +73,7 @@ class PositionalStrategy(BaseStrategy):
         log_file = os.path.join(logger_dir, log_file_name)
         self.logger = GetLogger(log_file).get_logger()
 
-        self.productType = ProductType.NRML
+        self.productType = ProductType.CNC
         self.exchange = Exchange.NSE
         self.startTimestamp = Utils.getTimeOfToDay(9, 15, 0)
         self.stopTimestamp = Utils.getTimeOfToDay(15, 16, 0)
@@ -54,14 +82,14 @@ class PositionalStrategy(BaseStrategy):
         self.token_dict = {}
         self.interval_higher = 45
         self.interval_smaller = 5
-        self.per_trade_amount = 15000
+        self.per_trade_amount = 100
         self.per_trade_stop = 3
         self.per_trade_target = 5
         self.min_buy_percent = .20
         self.max_buy_percent = 3
 
     def process(self):
-        all_trades = self.get_trade_by_status(['CREATED', 'ACTIVE', 'HALF_BOOK'])
+        all_trades = get_trade_by_status(['CREATED', 'ACTIVE', 'HALF_BOOK'])
         self.logger.info('Registering the Tokens')
 
         for trade in all_trades:
@@ -108,7 +136,7 @@ class PositionalStrategy(BaseStrategy):
                 time.sleep(waitSeconds)
             multiplier = multiplier + 1
 
-            all_monitor_trades = self.get_trade_by_status([trade_status.CREATED.name])
+            all_monitor_trades = get_trade_by_status([trade_status.CREATED.name])
             for trade in all_monitor_trades:
                 token = self.token_dict.get(trade.symbol)
                 if token is None:
@@ -122,19 +150,23 @@ class PositionalStrategy(BaseStrategy):
                 min_buy_price = trade.entry_price + ((trade.entry_price * self.min_buy_percent) / 100)
                 max_buy_price = trade.entry_price + ((trade.entry_price * self.max_buy_percent) / 100)
                 if price > max_buy_price:
-                    self.logger.info(f'{trade.symbol} is canceled for client {trade.client_id} as ltp crosses {max_buy_price} in Monitoring thread')
-                    self.update_trade_status(trade_id=trade.id, status=trade_status.CANCELED.name)
+                    self.logger.info(
+                        f'{trade.symbol} is canceled for client {trade.client_id} as ltp crosses {max_buy_price} in Monitoring thread')
+                    update_trade_status(trade_id=trade.id, status=trade_status.CANCELED.name)
                 if min_buy_price < price < max_buy_price:
                     self.logger.info(f'Entry price {price} triggered for {trade.symbol} in Monitoring thread')
                     threading.Thread(target=self.execute_five_min_buy_trade, args=(trade, price,)).start()
-
 
         self.logger.info('Monitoring Thread Completed')
 
     def execute_five_min_buy_trade(self, buy_trade, ltp):
         self.logger.info(f'In Execute Buy Thread for client {buy_trade.client_id}')
-        self.update_trade_status(buy_trade.id, trade_status.FIVE_MIN_BOUGHT_INITIATED.name)
+        update_trade_status(buy_trade.id, trade_status.FIVE_MIN_BOUGHT_INITIATED.name)
         qty = round(self.per_trade_amount / ltp)
+
+        if qty < 2:
+            qty = 2
+
         trade = Trade(tradingSymbol=buy_trade.symbol, symbolToken=self.token_dict.get(buy_trade.symbol),
                       clientId=buy_trade.client_id,
                       strategy_trade_id=buy_trade.id)
@@ -144,47 +176,50 @@ class PositionalStrategy(BaseStrategy):
         trade.create_trade_orderType_market(Direction.BUY, qty, Duration.DAY, self.productType,
                                             ltp - ((ltp * self.per_trade_stop) / 100))
         self.placeTrade(trade)
-        fill_price = ltp
-        stoploss = fill_price - ((fill_price * self.per_trade_stop) / 100)
-        target = fill_price + ((fill_price * self.per_trade_target) / 100)
-        self.update_execute_trade(id=buy_trade.id, qty=qty, stoploss=stoploss, fill_price=fill_price,
-                                  half_book_price=target, remaining_qty=qty,
-                                  status=trade_status.FIVE_MIN_BOUGHT.name)
+        trade = self.trade_status(trade, buy_trade)
+        if trade:
+            fill_price = trade.price
+            stoploss = fill_price - ((fill_price * self.per_trade_stop) / 100)
+            target = fill_price + ((fill_price * self.per_trade_target) / 100)
+            update_execute_trade(id=buy_trade.id, qty=trade.fill_qty, stoploss=stoploss, fill_price=fill_price,
+                                 half_book_price=target, remaining_qty=trade.fill_qty,
+                                 status=trade_status.FIVE_MIN_BOUGHT.name)
 
-        telegram.send_text_client(
-            f'{qty} of {buy_trade.symbol} are bought at price {fill_price} with stoploss of {stoploss}',
-            buy_trade.client_id)
-        self.logger.info(f'{qty} of {buy_trade.symbol} are bought at price {fill_price} with stoploss of {stoploss} for client {buy_trade.client_id}')
-
-        now = datetime.now()
-        newtime = now.replace(minute=int(now.minute / self.interval_higher) * self.interval_higher, second=0,
-                              microsecond=0) + timedelta(minutes=self.interval_higher)
-        waitSeconds = Utils.getEpoch(newtime) - Utils.getEpoch(now)
-        if waitSeconds > 0:
-            time.sleep(waitSeconds)
-
-        ltp = self.get_latest_price_websocket(self.token_dict.get(buy_trade.symbol))
-
-        if ltp < buy_trade.entry_price:
-            self.logger.info(f'5 min entry Failed for {buy_trade.symbol} for client {buy_trade.client_id}')
             telegram.send_text_client(
-                f'5 min entry Failed for {buy_trade.symbol} at {ltp} for client {buy_trade.client_id}',
+                f'{qty} of {buy_trade.symbol} are bought at price {fill_price} with stoploss of {stoploss}',
                 buy_trade.client_id)
-            buy_trade = positional_db().get_trade_by_id(buy_trade.id)
-            self.sell_all_share(buy_trade)
-        else:
-            self.logger.info(f'5 min entry Active for {buy_trade.symbol} for client {buy_trade.client_id}')
-            telegram.send_text_client(
-                f'5 min entry Active for {buy_trade.symbol} for client {buy_trade.client_id}',
-                buy_trade.client_id)
-            self.update_trade_status(buy_trade.id, trade_status.ACTIVE.name)
+            self.logger.info(
+                f'{qty} of {buy_trade.symbol} are bought at price {fill_price} with stoploss of {stoploss} for client {buy_trade.client_id}')
+
+            now = datetime.now()
+            newtime = now.replace(minute=int(now.minute / self.interval_higher) * self.interval_higher, second=0,
+                                  microsecond=0) + timedelta(minutes=self.interval_higher)
+            waitSeconds = Utils.getEpoch(newtime) - Utils.getEpoch(now)
+            if waitSeconds > 0:
+                time.sleep(waitSeconds)
+
+            ltp = self.get_latest_price_websocket(self.token_dict.get(buy_trade.symbol))
+
+            if ltp < buy_trade.entry_price:
+                self.logger.info(f'5 min entry Failed for {buy_trade.symbol} for client {buy_trade.client_id}')
+                telegram.send_text_client(
+                    f'5 min entry Failed for {buy_trade.symbol} at {ltp} for client {buy_trade.client_id}',
+                    buy_trade.client_id)
+                buy_trade = positional_db().get_trade_by_id(buy_trade.id)
+                self.sell_all_share(buy_trade)
+            else:
+                self.logger.info(f'5 min entry Active for {buy_trade.symbol} for client {buy_trade.client_id}')
+                telegram.send_text_client(
+                    f'5 min entry Active for {buy_trade.symbol} for client {buy_trade.client_id}',
+                    buy_trade.client_id)
+                update_trade_status(buy_trade.id, trade_status.ACTIVE.name)
 
     def start_Half_Book_thread(self):
         self.logger.info(f'In Half Book Thread')
         while True:
             if datetime.now() > self.stopTimestamp:
                 break
-            all_active_trades = self.get_trade_by_status([trade_status.ACTIVE.name])
+            all_active_trades = get_trade_by_status([trade_status.ACTIVE.name])
             for trade in all_active_trades:
                 token = self.token_dict.get(trade.symbol)
                 if token is None:
@@ -204,7 +239,7 @@ class PositionalStrategy(BaseStrategy):
 
     def half_book_share(self, sell_trade):
         self.logger.info(f'In Half Booking Thread for client {sell_trade.client_id}')
-        self.update_trade_status(sell_trade.id, trade_status.HALF_BOOKING.name)
+        update_trade_status(sell_trade.id, trade_status.HALF_BOOKING.name)
         sell_qty = math.ceil(sell_trade.remaining_qty / 2)
         trade = Trade(tradingSymbol=sell_trade.symbol, symbolToken=self.token_dict.get(sell_trade.symbol),
                       clientId=sell_trade.client_id,
@@ -215,14 +250,17 @@ class PositionalStrategy(BaseStrategy):
         trade.create_trade_orderType_market(Direction.SELL, sell_qty, Duration.DAY, self.productType,
                                             sell_trade.stoploss)
         self.placeTrade(trade)
-        exit_price_one = sell_trade.half_book_price
-        remaining_qty = sell_trade.remaining_qty - sell_qty
-        self.update_half_book_trade(sell_trade.id, exit_price_one=exit_price_one,
-                                    remaining_qty=remaining_qty, status=trade_status.HALF_BOOK.name)
+        trade = self.trade_status(trade, sell_trade)
+        if trade:
+            exit_price_one = trade.price
+            remaining_qty = sell_trade.remaining_qty - trade.fill_qty
+            update_half_book_trade(sell_trade.id, exit_price_one=exit_price_one,
+                                   remaining_qty=remaining_qty, status=trade_status.HALF_BOOK.name)
 
-        telegram.send_text_client(
-            f'{sell_qty} of {sell_trade.symbol} are Half Book at price {exit_price_one}', sell_trade.client_id)
-        self.logger.info(f'{sell_qty} of {sell_trade.symbol} are Half Book at price {exit_price_one} for client {sell_trade.client_id}')
+            telegram.send_text_client(
+                f'{sell_qty} of {sell_trade.symbol} are Half Book at price {exit_price_one}', sell_trade.client_id)
+            self.logger.info(
+                f'{sell_qty} of {sell_trade.symbol} are Half Book at price {exit_price_one} for client {sell_trade.client_id}')
 
     def start_StopLoss_thread(self):
         self.logger.info('In StopLoss Thread')
@@ -235,7 +273,7 @@ class PositionalStrategy(BaseStrategy):
                 time.sleep(waitSeconds)
             multiplier = multiplier + 1
 
-            all_half_trades = self.get_trade_by_status(
+            all_half_trades = get_trade_by_status(
                 [trade_status.HALF_BOOK.name, trade_status.ACTIVE.name])
             for trade in all_half_trades:
                 token = self.token_dict.get(trade.symbol)
@@ -248,14 +286,15 @@ class PositionalStrategy(BaseStrategy):
                     self.logger.info(f'price is None for {trade.symbol} in StopLoss thread')
                     continue
                 if price < trade.stoploss:
-                    self.logger.info(f'StopLoss triggered at {price} for {trade.symbol} for {trade.remaining_qty} quantities')
+                    self.logger.info(
+                        f'StopLoss triggered at {price} for {trade.symbol} for {trade.remaining_qty} quantities')
                     threading.Thread(target=self.sell_all_share, args=(trade,)).start()
         self.logger.info('StopLoss Thread Completed')
 
     def sell_all_share(self, sell_trade):
         # Thread check
         self.logger.info(f'In Sell Share Thread for client {sell_trade.client_id}')
-        self.update_trade_status(sell_trade.id, trade_status.SELLING.name)
+        update_trade_status(sell_trade.id, trade_status.SELLING.name)
         sell_qty = sell_trade.remaining_qty
         trade = Trade(tradingSymbol=sell_trade.symbol, symbolToken=self.token_dict.get(sell_trade.symbol),
                       clientId=sell_trade.client_id,
@@ -266,14 +305,17 @@ class PositionalStrategy(BaseStrategy):
         trade.create_trade_orderType_market(Direction.SELL, sell_qty, Duration.DAY, self.productType,
                                             sell_trade.stoploss)
         self.placeTrade(trade)
-        exit_price_sec = self.get_latest_price_websocket(self.token_dict.get(trade.tradingSymbol))
-        remaining_qty = 0
-        self.complete_trade(sell_trade.id, exit_price_sec=exit_price_sec,
-                            remaining_qty=remaining_qty, status=trade_status.COMPLETED.name)
+        trade = self.trade_status(trade, sell_trade)
+        if trade:
+            exit_price_sec = trade.price
+            remaining_qty = sell_qty - trade.fill_qty
+            complete_trade(sell_trade.id, exit_price_sec=exit_price_sec,
+                           remaining_qty=remaining_qty, status=trade_status.COMPLETED.name)
 
-        telegram.send_text_client(
-            f'{sell_qty} of {sell_trade.symbol} are sell at price {exit_price_sec}', sell_trade.client_id)
-        self.logger.info(f'{sell_qty} of {sell_trade.symbol} are sell at price {exit_price_sec} for client {sell_trade.client_id}')
+            telegram.send_text_client(
+                f'{sell_qty} of {sell_trade.symbol} are sell at price {exit_price_sec}', sell_trade.client_id)
+            self.logger.info(
+                f'{sell_qty} of {sell_trade.symbol} are sell at price {exit_price_sec} for client {sell_trade.client_id}')
 
     def get_next_high_interval(self, multiplier):
         sleep_time = datetime.now().replace(minute=15, hour=9, second=0) + timedelta(
@@ -295,12 +337,7 @@ class PositionalStrategy(BaseStrategy):
         self.market_data.register_token(ltp_model)
 
     def placeTrade(self, trade):
-        if not self.incubation:
-            return TradeManager().addNewTrade(trade)
-        else:
-            latest_ltp = self.get_latest_price_websocket(self.token_dict.get(trade.tradingSymbol))
-            trade.requestedEntry = latest_ltp
-            return TradeManager().incubate_trade(trade)
+        TradeManager().addNewTrade(trade)
 
     def initialize_multiplier_higher(self):
         now = datetime.now()
@@ -328,27 +365,37 @@ class PositionalStrategy(BaseStrategy):
             else:
                 return val
 
-    def update_trade_status(self, trade_id, status):
-        positional_db().update_trade_status(id=trade_id, status=status)
-
-    def get_trade_by_status(self, status):
-        return positional_db().get_trade_by_status(status_list=status)
-
-    def complete_trade(self, id, exit_price_sec, remaining_qty, status):
-        positional_db().complete_trade(id, exit_price_sec=exit_price_sec,
-                               remaining_qty=remaining_qty, status=status)
-
-    def update_half_book_trade(self, id, exit_price_one,
-                               remaining_qty, status):
-        positional_db().update_half_book_trade(id, exit_price_one=exit_price_one,
-                                       remaining_qty=remaining_qty, status=status)
-
-    def update_execute_trade(self, id, qty, stoploss, fill_price,
-                             half_book_price, remaining_qty,
-                             status):
-        positional_db().update_execute_trade(id=id, qty=qty, stoploss=stoploss, fill_price=fill_price,
-                                     half_book_price=half_book_price, remaining_qty=remaining_qty,
-                                     status=status)
+    def trade_status(self, trade, positional_trade):
+        while True:
+            trade_model = TradeManager.get_trade('PositionalStrategy', trade.system_tradeID)
+            if not trade_model:
+                continue
+            if trade_model.order_status == OrderStatus.COMPLETE:
+                return trade_model
+            if trade_model.order_status == OrderStatus.REJECTED:
+                positional_db().update_trade_status(id=positional_trade.id, status=trade_status.REJECTED.name)
+                self.logger.info(
+                    f'Order for {trade.qty} quantities for {positional_trade.symbol} is Rejected for client {positional_trade.client_id}')
+                telegram.send_text_client(
+                    f'Order for {trade.qty} quantities for {positional_trade.symbol} is Rejected',
+                    positional_trade.client_id)
+                return None
+            if trade_model.order_status == OrderStatus.FAILED:
+                positional_db().update_trade_status(id=positional_trade.id, status=trade_status.FAILED.name)
+                self.logger.info(
+                    f'Order for {trade.qty} quantities for {positional_trade.symbol} is Failed for client {positional_trade.client_id}')
+                telegram.send_text_client(
+                    f'Order for {trade.qty} quantities for {positional_trade.symbol} is Failed',
+                    positional_trade.client_id)
+                return None
+            if trade_model.order_status == OrderStatus.CANCELLED:
+                positional_db().update_trade_status(id=positional_trade.id, status=trade_status.CANCELED.name)
+                self.logger.info(
+                    f'Order for {trade.qty} quantities for {positional_trade.symbol} is Cancelled for client {positional_trade.client_id}')
+                telegram.send_text_client(
+                    f'Order for {trade.qty} quantities for {positional_trade.symbol} is Cancelled',
+                    positional_trade.client_id)
+                return None
 
 
 if __name__ == '__main__':

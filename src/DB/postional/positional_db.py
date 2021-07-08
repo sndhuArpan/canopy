@@ -17,6 +17,8 @@ class trade_status(enum.Enum):
     COMPLETED = 'COMPLETED'
     SELLING = 'SELLING'
     CANCELED = 'CANCELED'
+    REJECTED = 'REJECTED'
+    FAILED = 'FAILED'
 
 
 class positional_model:

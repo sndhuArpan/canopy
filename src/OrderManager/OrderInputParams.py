@@ -19,7 +19,7 @@ class OrderInputParams:
             self.price = ''  # The min or max price to execute the order at (for LIMIT orders)
             self.triggerPrice = ''  # The price at which an order should be triggered (SL, SL-M)
             self.squareoff = ''  # Only For ROBO (Bracket Order)
-            self.stoploss = ''  # Only For ROBO (Bracket Order)
+            self.stop_loss = ''  # Only For ROBO (Bracket Order)
             self.trailingStopLoss = ''  # Only For ROBO (Bracket Order)
             self.disclosedquantity = ''  # Quantity to disclose publicly (for equity trades)
             self.ordertag = ''
@@ -37,7 +37,7 @@ class OrderInputParams:
         self.price = trade.requestedEntry # The min or max price to execute the order at (for LIMIT orders)
         self.triggerPrice = trade.stopLoss_trigger_price  # The price at which an order should be triggered (SL, SL-M)
         self.squareoff = 0 #Only For ROBO (Bracket Order)
-        self.stoploss = trade.stopLoss  # Only For ROBO (Bracket Order)
+        self.stop_loss = trade.stop_loss  # Only For ROBO (Bracket Order)
         self.trailingStopLoss = ''# Only For ROBO (Bracket Order)
         self.disclosedquantity = '' # Quantity to disclose publicly (for equity trades)
         self.ordertag = trade.system_tradeID  #It is optional to apply to an order to identify.

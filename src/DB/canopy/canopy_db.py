@@ -212,9 +212,9 @@ class canopy_db:
         cursor = self.conn.execute(select_query)
         return self.__convert_row_model_list(cursor, strategy_name)
 
-    def select_daily_entry_client_id_order_status(self, client_id, strategy_name, order_status_list):
+    def select_daily_entry_client_id_not_order_status(self, client_id, strategy_name, order_status_list):
         select_query = 'select' + self.__select_columns() + ' from ' + strategy_name + '_Daily_Status where client_id = "' \
-                                                                                       '' + client_id + '" and order_status in (' + order_status_list + ')'
+                                                                                       '' + client_id + '" and order_status not in (' + order_status_list + ')'
         cursor = self.conn.execute(select_query)
         return self.__convert_row_model_list(cursor, strategy_name)
 
