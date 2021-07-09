@@ -176,7 +176,9 @@ class PositionalStrategy(BaseStrategy):
             trade.create_trade_orderType_market(Direction.BUY, qty, Duration.DAY, self.productType,
                                                 ltp - ((ltp * self.per_trade_stop) / 100))
             self.placeTrade(trade)
+            self.logger.info('Outside place Trade')
             trade = self.trade_status(trade, buy_trade)
+            self.logger.info('Outside Trade Status method')
             if trade:
                 fill_price = trade.price
                 stoploss = fill_price - ((fill_price * self.per_trade_stop) / 100)
