@@ -1,4 +1,4 @@
-from src.trademanager.TradeManager import TradeManager
+from src.trademanager.TradeManager import update_trade_status
 
 if __name__ == '__main__':
-    TradeManager().update_trade_status()
+    update_trade_status()
