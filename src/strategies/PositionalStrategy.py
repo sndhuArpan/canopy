@@ -185,11 +185,11 @@ class PositionalStrategy(BaseStrategy):
             trade = self.trade_status(trade, buy_trade)
             self.logger.info('Outside Trade Status method')
             if trade:
-                fill_price = trade.price
+                fill_price = float(trade.price)
                 stoploss = fill_price - ((fill_price * self.per_trade_stop) / 100)
                 target = fill_price + ((fill_price * self.per_trade_target) / 100)
-                update_execute_trade(id=buy_trade.id, qty=trade.fill_qty, stoploss=stoploss, fill_price=fill_price,
-                                     half_book_price=target, remaining_qty=trade.fill_qty,
+                update_execute_trade(id=buy_trade.id, qty=int(trade.fill_qty), stoploss=stoploss, fill_price=fill_price,
+                                     half_book_price=target, remaining_qty=int(trade.fill_qty),
                                      status=trade_status.FIVE_MIN_BOUGHT.name)
 
                 telegram.send_text_client(
@@ -260,11 +260,16 @@ class PositionalStrategy(BaseStrategy):
             trade.instrument_type = Segment.EQUITY
             trade.create_trade_orderType_market(Direction.SELL, sell_qty, Duration.DAY, self.productType,
                                                 sell_trade.stoploss)
-            self.placeTrade(trade)
+            t = threading.Thread(target=self.placeTrade, args=(trade,))
+            t.start()
+            self.logger.info('place Trade start')
+            t.join()
+            # self.placeTrade(trade)
+            self.logger.info('Outside place Trade')
             trade = self.trade_status(trade, sell_trade)
             if trade:
-                exit_price_one = trade.price
-                remaining_qty = sell_trade.remaining_qty - trade.fill_qty
+                exit_price_one = float(trade.price)
+                remaining_qty = sell_trade.remaining_qty - int(trade.fill_qty)
                 update_half_book_trade(sell_trade.id, exit_price_one=exit_price_one,
                                        remaining_qty=remaining_qty, status=trade_status.HALF_BOOK.name)
 
@@ -318,11 +323,16 @@ class PositionalStrategy(BaseStrategy):
             trade.instrument_type = Segment.EQUITY
             trade.create_trade_orderType_market(Direction.SELL, sell_qty, Duration.DAY, self.productType,
                                                 sell_trade.stoploss)
-            self.placeTrade(trade)
+            t = threading.Thread(target=self.placeTrade, args=(trade,))
+            t.start()
+            self.logger.info('place Trade start')
+            t.join()
+            # self.placeTrade(trade)
+            self.logger.info('Outside place Trade')
             trade = self.trade_status(trade, sell_trade)
             if trade:
-                exit_price_sec = trade.price
-                remaining_qty = sell_qty - trade.fill_qty
+                exit_price_sec = float(trade.price)
+                remaining_qty = sell_qty - int(trade.fill_qty)
                 complete_trade(sell_trade.id, exit_price_sec=exit_price_sec,
                                remaining_qty=remaining_qty, status=trade_status.COMPLETED.name)
 
