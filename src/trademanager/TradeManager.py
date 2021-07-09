@@ -17,6 +17,53 @@ from utils.Utils import Utils
 from utils.telegram import telegram
 
 
+def update_trade_status():
+    logger_dir = os.path.join(pathlib.Path.home(), 'Log/TradeManager_Status')
+    date_str = datetime.now().strftime("%d%m%Y")
+    log_file_name = 'TradeManager_Status' + date_str + '.log'
+    log_file = os.path.join(logger_dir, log_file_name)
+    logger = GetLogger(log_file).get_logger()
+    logger.info('In update trade status method')
+
+    while True:
+        if datetime.now() > Utils.getTimeOfToDay(16, 30, 0):
+            logger.info('Existing trade status update method')
+            break
+        try:
+            sql = canopy_db()
+            strategy_name_list = ['PositionalStrategy']
+            order_status_list = '"rejected", "cancelled", "complete", "failed"'
+            broker_db = BrokerAppDetails()
+            client_list = broker_db.get_all_clients()
+            for client in client_list:
+                order_book_dict = {}
+                connect = TradeManager.getClientConnect(client)
+                order_data = connect.orderBook().__getitem__('data')
+                if order_data:
+                    for data in order_data:
+                        order_book_dict[data['orderid']] = data
+
+                    for strategy_name in strategy_name_list:
+                        logger.info(f'Checking for {strategy_name} and client {client}')
+                        orders_list = sql.select_daily_entry_client_id_not_order_status(client, strategy_name,
+                                                                                        order_status_list)
+                        logger.info(f'Checking for {strategy_name} and client {client} and list size {len(orders_list)}')
+                        for order in orders_list:
+                            order_info = order_book_dict.get(order.order_id)
+                            if order_info is None:
+                                continue
+                            order.order_status = order_info['orderstatus']
+                            order.price = order_info['averageprice']
+                            order.fill_qty = order_info['filledshares']
+                            order.fill_time = order_info['updatetime']
+                            sql = canopy_db()
+                            sql.update_daily_entry_filled(order)
+        except Exception as e:
+            logger.error('Order Status update Failed %s', str(e))
+            telegram.send_text(str(e))
+        time.sleep(15)
+
+
 class TradeManager:
 
     def __init__(self):
@@ -109,46 +156,6 @@ class TradeManager:
         connect = BrokerAppDetails().get_normal_connection(client)
         return connect
 
-    def update_trade_status(self):
-        self.logger.info('In update trade status method')
-        while True:
-            if datetime.now() > Utils.getTimeOfToDay(16, 30, 0):
-                self.logger.info('Existing trade status update method')
-                break
-            try:
-                sql = canopy_db()
-                strategy_name_list = ['PositionalStrategy']
-                order_status_list = '"rejected", "cancelled", "complete", "failed"'
-                broker_db = BrokerAppDetails()
-                client_list = broker_db.get_all_clients()
-                for client in client_list:
-                    order_book_dict = {}
-                    connect = TradeManager.getClientConnect(client)
-                    order_data = connect.orderBook().__getitem__('data')
-                    if order_data:
-                        for data in order_data:
-                            order_book_dict[data['orderid']] = data
-
-                        for strategy_name in strategy_name_list:
-                            orders_list = sql.select_daily_entry_client_id_not_order_status(client, strategy_name,
-                                                                                            order_status_list)
-
-                            for order in orders_list:
-                                order_info = order_book_dict.get(order.order_id)
-                                if order_info is None:
-                                    continue
-                                order.order_status = order_info['orderstatus']
-                                order.price = order_info['averageprice']
-                                order.fill_qty = order_info['filledshares']
-                                order.fill_time = order_info['updatetime']
-                                sql = canopy_db()
-                                sql.update_daily_entry_filled(order)
-            except Exception as e:
-                self.logger.error('Order Status update Failed %s', str(e))
-                telegram.send_text(str(e))
-            time.sleep(15)
-
-
     @staticmethod
     def get_trade(strategy, system_tradeID):
         sql = canopy_db()
@@ -182,4 +189,4 @@ class TradeManager:
 
 
 if __name__ == '__main__':
-    TradeManager().update_trade_status()
+    update_trade_status()
