@@ -54,15 +54,16 @@ class PositionalStrategy(BaseStrategy):
 
     @staticmethod
     def getInstance():  # singleton class
-        if PositionalStrategy.__instance is None:
-            PositionalStrategy()
-        return PositionalStrategy.__instance
+        # if PositionalStrategy.__instance is None:
+        #     PositionalStrategy()
+        # return PositionalStrategy.__instance
+        return PositionalStrategy()
 
     def __init__(self):
-        if PositionalStrategy.__instance is not None:
-            raise Exception("This class is a singleton!")
-        else:
-            PositionalStrategy.__instance = self
+        # if PositionalStrategy.__instance is not None:
+        #     raise Exception("This class is a singleton!")
+        # else:
+        #     PositionalStrategy.__instance = self
         # Call Base class constructor
         super().__init__("PositionalStrategy")
         # Initialize all the properties specific to this strategy
@@ -175,7 +176,11 @@ class PositionalStrategy(BaseStrategy):
             trade.instrument_type = Segment.EQUITY
             trade.create_trade_orderType_market(Direction.BUY, qty, Duration.DAY, self.productType,
                                                 ltp - ((ltp * self.per_trade_stop) / 100))
-            self.placeTrade(trade)
+            t = threading.Thread(target=self.placeTrade, args=(trade, ))
+            t.start()
+            self.logger.info('place Trade start')
+            t.join()
+            #self.placeTrade(trade)
             self.logger.info('Outside place Trade')
             trade = self.trade_status(trade, buy_trade)
             self.logger.info('Outside Trade Status method')
