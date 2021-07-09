@@ -163,7 +163,7 @@ class PositionalStrategy(BaseStrategy):
         try:
             self.logger.info(f'In Execute Buy Thread for client {buy_trade.client_id}')
             update_trade_status(buy_trade.id, trade_status.FIVE_MIN_BOUGHT_INITIATED.name)
-            qty = round(self.per_trade_amount / ltp)
+            #qty = round(self.per_trade_amount / ltp)
 
             qty = 2
 

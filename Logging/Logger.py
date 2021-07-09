@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+from utils.Utils import Utils
 
 
 class GetLogger:
@@ -8,10 +9,7 @@ class GetLogger:
     def __init__(self, logger_file = None):
         self.log_file = logger_file
         # Create a custom logger
-        if logger_file is None:
-            self.logger = logging.getLogger(__name__)
-        else:
-            self.logger = logging.getLogger(Path(logger_file).stem)
+        self.logger = logging.getLogger(Utils.generateTradeID())
 
         # Create handlers
         c_handler = logging.StreamHandler()

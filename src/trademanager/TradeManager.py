@@ -91,12 +91,11 @@ class TradeManager:
                                 instrument_type=trade.instrument_type)
         sql.insert_strategy_daily(model)
         self.logger.info('TradeManager: trade %s added successfully to the list', trade.system_tradeID)
-        return self.executeTrade(trade)
+        self.executeTrade(trade)
 
     def executeTrade(self, trade):
         self.logger.info('TradeManager: Execute trade called for %s', trade.system_tradeID)
         # Create order input params object and place order
-        print('in excute trade')
         oip = OrderInputParams(trade)
         sql = canopy_db()
         model = sql.select_daily_entry_system_trade_id(trade.system_tradeID, trade.strategy)
@@ -104,11 +103,9 @@ class TradeManager:
             orderid = TradeManager.getOrderManager(model.client_id).placeOrder(oip)
             model.order_id = orderid
             model.order_status = OrderStatus.CREATED
-            print('in excute trade placed')
             sql.update_daily_entry(model)
             self.logger.info('TradeManager: Execute trade successful for %s and orderId %s', trade.system_tradeID,
                              orderid)
-            return orderid
         except Exception as e:
             print('in excute trade failed')
             telegram.send_text(str(e))
@@ -116,7 +113,6 @@ class TradeManager:
                               str(e))
             model.order_status = OrderStatus.FAILED
             sql.update_daily_entry_status(model)
-            return None
 
     def executeCancelTrade(self, model):
         self.logger.info('TradeManager: Cancel trade called for %s', model.order_id)
