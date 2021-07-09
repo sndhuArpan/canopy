@@ -3,6 +3,7 @@ import os
 import pathlib
 import threading
 import time
+import traceback
 from datetime import datetime, timedelta
 
 from Logging.Logger import GetLogger
@@ -182,14 +183,14 @@ class PositionalStrategy(BaseStrategy):
             t.join()
             #self.placeTrade(trade)
             self.logger.info('Outside place Trade')
-            trade = self.trade_status(trade, buy_trade)
+            trade_model = self.trade_status(trade, buy_trade)
             self.logger.info('Outside Trade Status method')
-            if trade:
-                fill_price = float(trade.price)
-                stoploss = fill_price - ((fill_price * self.per_trade_stop) / 100)
-                target = fill_price + ((fill_price * self.per_trade_target) / 100)
-                update_execute_trade(id=buy_trade.id, qty=int(trade.fill_qty), stoploss=stoploss, fill_price=fill_price,
-                                     half_book_price=target, remaining_qty=int(trade.fill_qty),
+            if trade_model:
+                fill_price = float(trade_model.price)
+                stoploss = fill_price-((fill_price*self.per_trade_stop)/100)
+                target = fill_price+((fill_price*self.per_trade_target)/100)
+                update_execute_trade(id=buy_trade.id, qty=int(trade_model.fill_qty), stoploss=stoploss, fill_price=fill_price,
+                                     half_book_price=target, remaining_qty=int(trade_model.fill_qty),
                                      status=trade_status.FIVE_MIN_BOUGHT.name)
 
                 telegram.send_text_client(
@@ -221,7 +222,7 @@ class PositionalStrategy(BaseStrategy):
                         buy_trade.client_id)
                     update_trade_status(buy_trade.id, trade_status.ACTIVE.name)
         except Exception as e:
-            self.logger.error(f'5 min thread error occured --- {str(e)}')
+            self.logger.error('Exception in 5 min  : {0}\n{1}'.format(str(e), traceback.format_exc()))
 
 
     def start_Half_Book_thread(self):
@@ -266,10 +267,11 @@ class PositionalStrategy(BaseStrategy):
             t.join()
             # self.placeTrade(trade)
             self.logger.info('Outside place Trade')
-            trade = self.trade_status(trade, sell_trade)
-            if trade:
-                exit_price_one = float(trade.price)
-                remaining_qty = sell_trade.remaining_qty - int(trade.fill_qty)
+            trade_model = self.trade_status(trade, sell_trade)
+            self.logger.info('Outside Trade Status method')
+            if trade_model:
+                exit_price_one = float(trade_model.price)
+                remaining_qty = sell_trade.remaining_qty - int(trade_model.fill_qty)
                 update_half_book_trade(sell_trade.id, exit_price_one=exit_price_one,
                                        remaining_qty=remaining_qty, status=trade_status.HALF_BOOK.name)
 
@@ -278,7 +280,7 @@ class PositionalStrategy(BaseStrategy):
                 self.logger.info(
                     f'{sell_qty} of {sell_trade.symbol} are Half Book at price {exit_price_one} for client {sell_trade.client_id}')
         except Exception as e:
-            self.logger.error(f'half_book_share thread error occured --- {str(e)}')
+            self.logger.error('Exception in half book  : {0}\n{1}'.format(str(e), traceback.format_exc()))
 
     def start_StopLoss_thread(self):
         self.logger.info('In StopLoss Thread')
@@ -329,10 +331,11 @@ class PositionalStrategy(BaseStrategy):
             t.join()
             # self.placeTrade(trade)
             self.logger.info('Outside place Trade')
-            trade = self.trade_status(trade, sell_trade)
-            if trade:
-                exit_price_sec = float(trade.price)
-                remaining_qty = sell_qty - int(trade.fill_qty)
+            trade_model = self.trade_status(trade, sell_trade)
+            self.logger.info('Outside Trade Status method')
+            if trade_model:
+                exit_price_sec = float(trade_model.price)
+                remaining_qty = sell_qty - int(trade_model.fill_qty)
                 complete_trade(sell_trade.id, exit_price_sec=exit_price_sec,
                                remaining_qty=remaining_qty, status=trade_status.COMPLETED.name)
 
@@ -341,7 +344,7 @@ class PositionalStrategy(BaseStrategy):
                 self.logger.info(
                     f'{sell_qty} of {sell_trade.symbol} are sell at price {exit_price_sec} for client {sell_trade.client_id}')
         except Exception as e:
-            self.logger.error(f'sell_all_share thread error occured --- {str(e)}')
+            self.logger.error('Exception in sell share  : {0}\n{1}'.format(str(e), traceback.format_exc()))
 
     def get_next_high_interval(self, multiplier):
         sleep_time = datetime.now().replace(minute=15, hour=9, second=0) + timedelta(
