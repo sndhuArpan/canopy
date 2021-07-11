@@ -23,6 +23,7 @@ def update_trade_status():
     log_file_name = 'TradeManager_Status' + date_str + '.log'
     log_file = os.path.join(logger_dir, log_file_name)
     logger = GetLogger(log_file).get_logger()
+
     logger.info('In update trade status method')
 
     while True:
@@ -44,15 +45,15 @@ def update_trade_status():
                         order_book_dict[data['orderid']] = data
 
                     for strategy_name in strategy_name_list:
-                        logger.info(f'Checking for {strategy_name} and client {client}')
                         orders_list = sql.select_daily_entry_client_id_not_order_status(client, strategy_name,
                                                                                         order_status_list)
-                        logger.info(f'Checking for {strategy_name} and client {client} and list size {len(orders_list)}')
                         for order in orders_list:
                             order_info = order_book_dict.get(order.order_id)
                             if order_info is None:
                                 continue
-                            order.order_status = order_info['orderstatus']
+                            new_status = order_info['orderstatus']
+                            logger.info(f'Updating trade status for {order.order_id} from {order.order_status} to {new_status}')
+                            order.order_status = new_status
                             order.price = order_info['averageprice']
                             order.fill_qty = order_info['filledshares']
                             order.fill_time = order_info['updatetime']
@@ -75,7 +76,7 @@ class TradeManager:
 
     def addNewTrade(self, trade):
         if trade is None:
-            return None
+            return
         self.logger.info(f'TradeManager: new trade for {trade.qty} for {trade.tradingSymbol} for client {trade.clientId} --- system_trade_id {trade.system_tradeID}')
         sql = canopy_db()
         model = trade_status_model(trade.strategy)
@@ -159,7 +160,7 @@ class TradeManager:
 
     def incubate_trade(self, trade):
         if trade is None:
-            return None
+            return
         self.logger.info(
             f'TradeManager: new trade for {trade.qty} for {trade.tradingSymbol} for client {trade.clientId} --- system_trade_id {trade.system_tradeID}')
         sql = canopy_db()
@@ -181,7 +182,6 @@ class TradeManager:
         model.fill_time = str(datetime.now())
         sql.update_daily_entry_filled(model)
         self.logger.info('TradeManager: trade %s added successfully to the list', trade.system_tradeID)
-        return model.order_id
 
 
 if __name__ == '__main__':

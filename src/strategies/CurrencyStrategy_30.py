@@ -26,20 +26,12 @@ from utils.telegram import telegram
 
 
 class CurrencyStrategy_30(BaseStrategy):
-    __instance = None
 
     @staticmethod
-    def getInstance():  # singleton class
-        if CurrencyStrategy_30.__instance is None:
-            CurrencyStrategy_30()
-        return CurrencyStrategy_30.__instance
+    def getInstance():
+        return CurrencyStrategy_30()
 
     def __init__(self):
-        if CurrencyStrategy_30.__instance is not None:
-            raise Exception("This class is a singleton!")
-        else:
-            CurrencyStrategy_30.__instance = self
-        # Call Base class constructor
         super().__init__("CurrencyStrategy_30")
         # Initialize all the properties specific to this strategy
 
@@ -99,7 +91,7 @@ class CurrencyStrategy_30(BaseStrategy):
             gap_down_fill = False
         self.logger.info(f'gap up fill {gap_up_fill} and gap down fill {gap_down_fill}')
 
-        if abs(open - close)/self.one_pip < 3:
+        if abs(open - close) / self.one_pip < 3:
             self.logger.info('Doji found -- no trade')
             return
         else:
@@ -168,8 +160,10 @@ class CurrencyStrategy_30(BaseStrategy):
             trade.instrument_type = Segment.CURRENCY
             trade.create_trade_orderType_limit(Direction.BUY, self.quantity, price, Duration.DAY, self.productType,
                                                stop_loss)
-            self.placeTrade(trade, client)
-
+            t = threading.Thread(target=self.placeTrade, args=(trade, client,))
+            t.start()
+            self.logger.info('Buy Place Trade start for CurrencyStrategy_30')
+            t.join()
             start_time = self.next_five_min()
 
             fill_price = 0
@@ -193,13 +187,13 @@ class CurrencyStrategy_30(BaseStrategy):
                 if datetime.now() < start_time:
                     if latest_ltp >= target and not half_sell:
                         sell_trade = True
-                        sell_qty = self.quantity / 2
+                        sell_qty = self.quantity/2
                         remaining_qty = remaining_qty - sell_qty
                         stop_loss = fill_price
                 else:
                     if latest_ltp >= target and not half_sell:
                         sell_trade = True
-                        sell_qty = self.quantity / 2
+                        sell_qty = self.quantity/2
                         remaining_qty = remaining_qty - sell_qty
                         stop_loss = fill_price
                     elif latest_ltp <= stop_loss:
@@ -245,7 +239,11 @@ class CurrencyStrategy_30(BaseStrategy):
             trade.instrument_type = Segment.CURRENCY
             trade.create_trade_orderType_limit(Direction.SELL, self.quantity, price, Duration.DAY, self.productType,
                                                stop_loss)
-            self.placeTrade(trade, client)
+
+            t = threading.Thread(target=self.placeTrade, args=(trade, client,))
+            t.start()
+            self.logger.info('Sell Place Trade start for CurrencyStrategy_30')
+            t.join()
 
             start_time = self.next_five_min()
 
@@ -260,7 +258,7 @@ class CurrencyStrategy_30(BaseStrategy):
 
             self.logger.info(f'{self.quantity} USDINR sold at price {fill_price} for client {client}')
 
-            target = fill_price - 10 * self.one_pip
+            target = fill_price-10*self.one_pip
 
             remaining_qty = self.quantity
             half_buy = False
@@ -271,13 +269,13 @@ class CurrencyStrategy_30(BaseStrategy):
                 if datetime.now() < start_time:
                     if latest_ltp <= target and not half_buy:
                         buy_trade = True
-                        buy_qty = self.quantity / 2
+                        buy_qty = self.quantity/2
                         remaining_qty = remaining_qty - buy_qty
                         stop_loss = fill_price
                 else:
                     if latest_ltp <= target and not half_buy:
                         buy_trade = True
-                        buy_qty = self.quantity / 2
+                        buy_qty = self.quantity/2
                         remaining_qty = remaining_qty - buy_qty
                         stop_loss = fill_price
                     elif latest_ltp >= stop_loss:
@@ -317,25 +315,27 @@ class CurrencyStrategy_30(BaseStrategy):
         trade_df = self.trade_dataframe.loc[client]
         if trade.direction == Direction.BUY:
             if trade_df['buy_trade'] == self.max_buy_call:
-                return None
+                self.logger.error('Max Buy call occurred in CurrencyStrategy_30')
+                return
             else:
                 trade_df['buy_trade'] = trade_df['buy_trade'] + 1
         else:
             if trade_df['sell_trade'] == self.max_sl_call:
-                return None
+                self.logger.error('Max Sell call occurred in CurrencyStrategy_30')
+                return
             else:
                 trade_df['sell_trade'] = trade_df['sell_trade'] + 1
         if not self.incubation:
-            return TradeManager().addNewTrade(trade)
+            TradeManager().addNewTrade(trade)
         else:
             latest_ltp = self.get_latest_price_websocket(self.token_detail.token)
             trade.requestedEntry = latest_ltp
-            return TradeManager().incubate_trade(trade)
+            TradeManager().incubate_trade(trade)
 
     def next_five_min(self):
         now = datetime.now()
-        return now.replace(minute=int(now.minute / 5) * 5, second=0, microsecond=0) + timedelta(minutes=5)
+        return now.replace(minute=int(now.minute/5)*5, second=0, microsecond=0) + timedelta(minutes=5)
+
 
 if __name__ == '__main__':
     CurrencyStrategy_30().getInstance().run()
-

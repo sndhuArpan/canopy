@@ -20,7 +20,7 @@ class telegram:
     def send_text(message):
         try:
             for telegram_id in telegram_id_list:
-                # telegram.logger.info(f'Sending message to telegram_id: {telegram_id}')
+                telegram.logger.info(f'Sending message to telegram_id: {telegram_id}')
                 bot.sendMessage(telegram_id, message)
         except Exception as e:
             telegram.logger.error(

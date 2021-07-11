@@ -51,21 +51,12 @@ def update_execute_trade(id, qty, stoploss, fill_price,
 
 
 class PositionalStrategy(BaseStrategy):
-    __instance = None
 
     @staticmethod
-    def getInstance():  # singleton class
-        # if PositionalStrategy.__instance is None:
-        #     PositionalStrategy()
-        # return PositionalStrategy.__instance
+    def getInstance():
         return PositionalStrategy()
 
     def __init__(self):
-        # if PositionalStrategy.__instance is not None:
-        #     raise Exception("This class is a singleton!")
-        # else:
-        #     PositionalStrategy.__instance = self
-        # Call Base class constructor
         super().__init__("PositionalStrategy")
         # Initialize all the properties specific to this strategy
 
@@ -149,8 +140,8 @@ class PositionalStrategy(BaseStrategy):
                 if price is None:
                     self.logger.error(f'Price is None for {trade.symbol} in Monitoring thread')
                     continue
-                min_buy_price = trade.entry_price + ((trade.entry_price * self.min_buy_percent) / 100)
-                max_buy_price = trade.entry_price + ((trade.entry_price * self.max_buy_percent) / 100)
+                min_buy_price = trade.entry_price+((trade.entry_price*self.min_buy_percent)/100)
+                max_buy_price = trade.entry_price+((trade.entry_price*self.max_buy_percent)/100)
                 if price > max_buy_price:
                     self.logger.info(
                         f'{trade.symbol} is canceled for client {trade.client_id} as ltp crosses {max_buy_price} in Monitoring thread')
@@ -165,7 +156,7 @@ class PositionalStrategy(BaseStrategy):
         try:
             self.logger.info(f'In Execute Buy Thread for client {buy_trade.client_id}')
             update_trade_status(buy_trade.id, trade_status.FIVE_MIN_BOUGHT_INITIATED.name)
-            #qty = round(self.per_trade_amount / ltp)
+            # qty = round(self.per_trade_amount / ltp)
 
             qty = 2
 
@@ -176,12 +167,11 @@ class PositionalStrategy(BaseStrategy):
             trade.exchange = self.exchange
             trade.instrument_type = Segment.EQUITY
             trade.create_trade_orderType_market(Direction.BUY, qty, Duration.DAY, self.productType,
-                                                ltp - ((ltp * self.per_trade_stop) / 100))
-            t = threading.Thread(target=self.placeTrade, args=(trade, ))
+                                                ltp - ((ltp * self.per_trade_stop)/100))
+            t = threading.Thread(target=self.placeTrade, args=(trade,))
             t.start()
             self.logger.info('place Trade start')
             t.join()
-            #self.placeTrade(trade)
             self.logger.info('Outside place Trade')
             trade_model = self.trade_status(trade, buy_trade)
             self.logger.info('Outside Trade Status method')
@@ -189,7 +179,8 @@ class PositionalStrategy(BaseStrategy):
                 fill_price = float(trade_model.price)
                 stoploss = fill_price-((fill_price*self.per_trade_stop)/100)
                 target = fill_price+((fill_price*self.per_trade_target)/100)
-                update_execute_trade(id=buy_trade.id, qty=int(trade_model.fill_qty), stoploss=stoploss, fill_price=fill_price,
+                update_execute_trade(id=buy_trade.id, qty=int(trade_model.fill_qty), stoploss=stoploss,
+                                     fill_price=fill_price,
                                      half_book_price=target, remaining_qty=int(trade_model.fill_qty),
                                      status=trade_status.FIVE_MIN_BOUGHT.name)
 
@@ -200,7 +191,7 @@ class PositionalStrategy(BaseStrategy):
                     f'{qty} of {buy_trade.symbol} are bought at price {fill_price} with stoploss of {stoploss} for client {buy_trade.client_id}')
 
                 now = datetime.now()
-                newtime = now.replace(minute=int(now.minute / self.interval_higher) * self.interval_higher, second=0,
+                newtime = now.replace(minute=int(now.minute/self.interval_higher) * self.interval_higher, second=0,
                                       microsecond=0) + timedelta(minutes=self.interval_higher)
                 waitSeconds = Utils.getEpoch(newtime) - Utils.getEpoch(now)
                 if waitSeconds > 0:
@@ -223,7 +214,6 @@ class PositionalStrategy(BaseStrategy):
                     update_trade_status(buy_trade.id, trade_status.ACTIVE.name)
         except Exception as e:
             self.logger.error('Exception in 5 min  : {0}\n{1}'.format(str(e), traceback.format_exc()))
-
 
     def start_Half_Book_thread(self):
         self.logger.info(f'In Half Book Thread')
@@ -252,7 +242,7 @@ class PositionalStrategy(BaseStrategy):
         try:
             self.logger.info(f'In Half Booking Thread for client {sell_trade.client_id}')
             update_trade_status(sell_trade.id, trade_status.HALF_BOOKING.name)
-            sell_qty = math.ceil(sell_trade.remaining_qty / 2)
+            sell_qty = math.ceil(sell_trade.remaining_qty/2)
             trade = Trade(tradingSymbol=sell_trade.symbol, symbolToken=self.token_dict.get(sell_trade.symbol),
                           clientId=sell_trade.client_id,
                           strategy_trade_id=sell_trade.id)
@@ -265,7 +255,6 @@ class PositionalStrategy(BaseStrategy):
             t.start()
             self.logger.info('place Trade start')
             t.join()
-            # self.placeTrade(trade)
             self.logger.info('Outside place Trade')
             trade_model = self.trade_status(trade, sell_trade)
             self.logger.info('Outside Trade Status method')
@@ -375,7 +364,7 @@ class PositionalStrategy(BaseStrategy):
             return 1
         else:
             diff = now - fix
-            val = math.ceil((diff.seconds / 60) / self.interval_higher)
+            val = math.ceil((diff.seconds/60)/self.interval_higher)
             if val == 0:
                 return 1
             else:
@@ -388,7 +377,7 @@ class PositionalStrategy(BaseStrategy):
             return 1
         else:
             diff = now - fix
-            val = math.ceil((diff.seconds / 60) / self.interval_smaller)
+            val = math.ceil((diff.seconds/60)/self.interval_smaller)
             if val == 0:
                 return 1
             else:
