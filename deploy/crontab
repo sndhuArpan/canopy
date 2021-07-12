@@ -4,3 +4,4 @@
 15 9 * * 1-5 /home/ec2-user/canopy/canopy/src/core/RunTradeManagerStatusUpdate.sh > RunTradeManagerStatusUpdate.log
 0 17 * * * /home/ec2-user/canopy/canopy/src/core/KillMarketDataLoader.sh > KillMarketDataLoader.log
 0 18 * * 5 /home/ec2-user/canopy/canopy/src/StockScanner/RunScanner/RunNseStockScanner.sh > NseStockScanner.log
+0 0 * * 0 /home/ec2-user/canopy/canopy/src/core/ClearLogs.sh > ClearLogs.log
