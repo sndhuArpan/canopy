@@ -47,18 +47,19 @@ def update_trade_status():
                     for strategy_name in strategy_name_list:
                         orders_list = sql.select_daily_entry_client_id_not_order_status(client, strategy_name,
                                                                                         order_status_list)
-                        for order in orders_list:
-                            order_info = order_book_dict.get(order.order_id)
-                            if order_info is None:
-                                continue
-                            new_status = order_info['orderstatus']
-                            logger.info(f'Updating trade status for {order.order_id} from {order.order_status} to {new_status}')
-                            order.order_status = new_status
-                            order.price = order_info['averageprice']
-                            order.fill_qty = order_info['filledshares']
-                            order.fill_time = order_info['updatetime']
-                            sql = canopy_db()
-                            sql.update_daily_entry_filled(order)
+                        if orders_list:
+                            for order in orders_list:
+                                order_info = order_book_dict.get(order.order_id)
+                                if order_info is None:
+                                    continue
+                                new_status = order_info['orderstatus']
+                                logger.info(f'Updating trade order for {order.client_id} for {order.order_id} from {order.order_status} to {new_status}')
+                                order.order_status = new_status
+                                order.price = order_info['averageprice']
+                                order.fill_qty = order_info['filledshares']
+                                order.fill_time = order_info['updatetime']
+                                sql = canopy_db()
+                                sql.update_daily_entry_filled(order)
         except Exception as e:
             logger.error('Order Status update Failed %s', str(e))
             telegram.send_text(str(e))
