@@ -1,9 +1,9 @@
-import logging
 import os
 import pathlib
 import time
 import uuid
 from datetime import datetime
+import traceback
 
 from Logging.Logger import GetLogger
 from src.DB.canopy.canopy_db import canopy_db, trade_status_model
@@ -40,14 +40,14 @@ def update_trade_status():
                 order_book_dict = {}
                 connect = TradeManager.getClientConnect(client)
                 order_data = connect.orderBook().__getitem__('data')
-                if order_data:
+                if order_data is not None:
                     for data in order_data:
                         order_book_dict[data['orderid']] = data
 
                     for strategy_name in strategy_name_list:
                         orders_list = sql.select_daily_entry_client_id_not_order_status(client, strategy_name,
                                                                                         order_status_list)
-                        if orders_list:
+                        if orders_list is not None:
                             for order in orders_list:
                                 order_info = order_book_dict.get(order.order_id)
                                 if order_info is None:
@@ -61,7 +61,7 @@ def update_trade_status():
                                 sql = canopy_db()
                                 sql.update_daily_entry_filled(order)
         except Exception as e:
-            logger.error('Order Status update Failed %s', str(e))
+            logger.error(f'Order Status update Failed  : {str(e)} --- {traceback.format_exc()}')
             telegram.send_text(str(e))
         time.sleep(15)
 
