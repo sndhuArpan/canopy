@@ -23,25 +23,29 @@ class Connection:
 
 
 class BrokerAppDetails(static_db):
+    connection_dict = {}
 
     def __init__(self):
         super().__init__()
+
+    def encryt_text(self, text):
         encrypt_file = os.path.join(pathlib.Path(os.path.dirname(__file__)).parents[2], 'EncryptionKey.txt')
         infile = open(encrypt_file, 'r')
         key = infile.readline()
         byte_key = bytes(key, encoding='utf8')
-        self.cipher_suite = Fernet(byte_key)
-
-        self.connection_dict = {}
-
-    def encryt_text(self, text):
+        cipher_suite = Fernet(byte_key)
         byte_text = bytes(text, encoding='utf8')
-        ciphered_text = self.cipher_suite.encrypt(byte_text)
+        ciphered_text = cipher_suite.encrypt(byte_text)
         return ciphered_text.decode("utf-8")
 
     def decrypt_text(self, text):
+        encrypt_file = os.path.join(pathlib.Path(os.path.dirname(__file__)).parents[2], 'EncryptionKey.txt')
+        infile = open(encrypt_file, 'r')
+        key = infile.readline()
+        byte_key = bytes(key, encoding='utf8')
+        cipher_suite = Fernet(byte_key)
         ciphered_bytes = bytes(text, encoding='utf8')
-        unciphered_bytes = (self.cipher_suite.decrypt(ciphered_bytes))
+        unciphered_bytes = (cipher_suite.decrypt(ciphered_bytes))
         return unciphered_bytes.decode("utf-8")
 
     def create_brokerclientdetails_table(self):
@@ -58,11 +62,11 @@ class BrokerAppDetails(static_db):
         encrypted_password = self.encryt_text(connection.password)
         insert_query = '''insert into brokerclientdetails(client_id,password,api_key,websocket_api_key,broker) 
                          values ("{client_id}","{password}","{api_key}","{websocket_api_key}","{broker}")'''
-        insert_query = insert_query.format(client_id = connection.client_id,
-                                           password = encrypted_password,
-                                           api_key = connection.api_key,
-                                           websocket_api_key = connection.websocket_api_key,
-                                           broker = connection.broker)
+        insert_query = insert_query.format(client_id=connection.client_id,
+                                           password=encrypted_password,
+                                           api_key=connection.api_key,
+                                           websocket_api_key=connection.websocket_api_key,
+                                           broker=connection.broker)
         print(insert_query)
         self.conn.execute(insert_query)
         self.conn.commit()
@@ -81,13 +85,18 @@ class BrokerAppDetails(static_db):
         connection_details = self.get_brokerclientdetails(client_id)
         broker = connection_details.broker
         if broker == 'ANGEL':
-            connect = SmartConnect(api_key= connection_details.api_key)
+            connect = SmartConnect(api_key=connection_details.api_key)
             connect.generateSession(client_id, connection_details.password)
-            self.connection_dict[client_id] = connect
+            BrokerAppDetails.connection_dict[client_id] = connect
 
     def check_connection_exists(self, client_id):
-        if client_id in self.connection_dict.keys():
-            return True, self.connection_dict.get(client_id)
+        if client_id in BrokerAppDetails.connection_dict.keys():
+            connect = BrokerAppDetails.connection_dict.get(client_id)
+            message = connect.position().__getitem__('message')
+            if message == 'SUCCESS':
+                return True, connect
+            else:
+                return False, None
         else:
             return False, None
 
@@ -97,15 +106,14 @@ class BrokerAppDetails(static_db):
             return connection
         else:
             self.create_normal_connection(client_id)
-            return self.connection_dict.get(client_id)
+            return BrokerAppDetails.connection_dict.get(client_id)
 
     def create_all_connections(self):
-        all_connection_query =  '''select client_id from brokerclientdetails'''
+        all_connection_query = '''select client_id from brokerclientdetails'''
         cursor = self.conn.execute(all_connection_query)
         for row in cursor:
             if row:
                 self.create_normal_connection(row[0])
-
 
     def session_reconnect(self, client_id):
         self.create_normal_connection(client_id)
@@ -118,7 +126,7 @@ class BrokerAppDetails(static_db):
             client_list.append(row[0])
         return client_list
 
-if __name__ == '__main__':
 
-    obj= Connection('A533646', 'poiuhbnm@2', 'hFAupBdI', None, 'ANGEL').get()
+if __name__ == '__main__':
+    obj = Connection('A533646', 'poiuhbnm@2', 'hFAupBdI', None, 'ANGEL').get()
     BrokerAppDetails().insert_into_brokerclientdetails(obj)

@@ -61,6 +61,7 @@ class CurrencyStrategy_30(BaseStrategy):
 
         self.trade_dataframe.index = self.trade_dataframe['client']
         self.max_sl_call = 2
+        self.max_buy_call = 2
         self.token_detail = TickerDetails().get_future_token(self.exchange, 'USDINR')
 
         self.market_data = MarketData()
@@ -93,57 +94,56 @@ class CurrencyStrategy_30(BaseStrategy):
 
         if abs(open - close) / self.one_pip < 3:
             self.logger.info('Doji found -- no trade')
-            return
         else:
             if open > close and gap_up_fill:
                 only_sell = True
             elif open < close and gap_down_fill:
                 only_buy = True
 
-        info_String = 'open - {open}, close - {close}, buy_high_range - {buy_high_range}, ' \
-                      'sell_low_range - {sell_low_range}'.format(open=open,
-                                                                 close=close,
-                                                                 buy_high_range=buy_high_range,
-                                                                 sell_low_range=sell_low_range)
-        self.logger.info(info_String)
+            info_String = 'open - {open}, close - {close}, buy_high_range - {buy_high_range}, ' \
+                          'sell_low_range - {sell_low_range}'.format(open=open,
+                                                                     close=close,
+                                                                     buy_high_range=buy_high_range,
+                                                                     sell_low_range=sell_low_range)
+            self.logger.info(info_String)
 
-        while True:
-            if datetime.now() > self.stopTimestamp:
-                break
-            ltp_price = self.get_latest_price_websocket(self.token_detail.token)
-            if ltp_price is None:
-                self.logger.error('ltp_price is none')
-                break
-            if ltp_price >= buy_high_range and only_buy:
-                self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
-                jobs = []
-                for client_key in self.client_list:
-                    p = threading.Thread(target=self.generateTrade_buy,
-                                         args=(client_key, buy_sl, buy_high_range,))
-                    jobs.append(p)
+            while True:
+                if datetime.now() > self.stopTimestamp:
+                    break
+                ltp_price = self.get_latest_price_websocket(self.token_detail.token)
+                if ltp_price is None:
+                    self.logger.error('ltp_price is none')
+                    break
+                if ltp_price >= buy_high_range and only_buy:
+                    self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
+                    jobs = []
+                    for client_key in self.client_list:
+                        p = threading.Thread(target=self.generateTrade_buy,
+                                             args=(client_key, buy_sl, buy_high_range,))
+                        jobs.append(p)
 
-                for job in jobs:
-                    job.start()
+                    for job in jobs:
+                        job.start()
 
-                for job in jobs:
-                    job.join()
+                    for job in jobs:
+                        job.join()
 
-                break
-            elif ltp_price <= sell_low_range and only_sell:
-                self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
-                jobs = []
-                for client_key in self.client_list:
-                    p = threading.Thread(target=self.generateTrade_sell,
-                                         args=(client_key, sell_sl, sell_low_range,))
-                    jobs.append(p)
+                    break
+                elif ltp_price <= sell_low_range and only_sell:
+                    self.squareOffTimestamp = datetime.now() + timedelta(hours=1)
+                    jobs = []
+                    for client_key in self.client_list:
+                        p = threading.Thread(target=self.generateTrade_sell,
+                                             args=(client_key, sell_sl, sell_low_range,))
+                        jobs.append(p)
 
-                for job in jobs:
-                    job.start()
+                    for job in jobs:
+                        job.start()
 
-                for job in jobs:
-                    job.join()
-                break
-            time.sleep(1)
+                    for job in jobs:
+                        job.join()
+                    break
+                time.sleep(1)
 
         self.logger.info('CurrencyStrategy_30 task completed for today')
         self.market_data.deregister_token(self.token_detail.token)
