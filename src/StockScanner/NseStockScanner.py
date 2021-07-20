@@ -21,8 +21,8 @@ class NseStockScanner:
         self.last_day = 365
         self.last_high_day_max = 70
         self.last_high_day_min = 15
-        self.fibo_low_level = 0.382
-        self.fibo_high_level = 0.618
+        self.fibo_low_level = 0.236
+        self.fibo_high_level = 0.5
         self.static_db = TickerDetails().get_all_stocks('nse')
         self.market_data = MarketData()
 
