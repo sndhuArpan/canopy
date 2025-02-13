@@ -5,7 +5,7 @@ from Logging.Logger import GetLogger
 
 telegram_id_list = ['464308445', '506426930']
 telegram_id_dict = {'A533646': '464308445', 'S705342': '506426930'}
-token = '564398612:AAEXUIfrJVFHfBnxS4Uot0Ob5vDPN8Ws69I'
+token = ''
 bot = tele.Bot(token=token)
 
 
